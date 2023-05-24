@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use Illuminate\Http\Request;
 
-class AccountsControllers extends Controller
+class AccountController extends Controller
 {
     public function index()
     {

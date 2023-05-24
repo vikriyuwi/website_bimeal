@@ -62,7 +62,7 @@ class AccountController extends Controller
 
     public function show (string $id)
     {
-        $account = Account::findOrFail($id);
+        $account = Account::find($id);
 
         if(!$account) {
             return (new ApiRule)->responsemessage(
@@ -81,7 +81,7 @@ class AccountController extends Controller
 
     public function update(Request $request, string $id)
     {
-        $account = Account::findOrFail($id);
+        $account = Account::find($id);
 
         $validation = Validator::make(
             $request->all(),
@@ -129,7 +129,7 @@ class AccountController extends Controller
 
     public function destroy(string $id)
     {
-        $account = Account::findOrFail($id);
+        $account = Account::find($id);
         if ($account){
             return (new ApiRule)->responsemessage(
                 "Account data not found",

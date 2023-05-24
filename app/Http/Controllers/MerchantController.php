@@ -47,12 +47,12 @@ class MerchantController extends Controller
                 422
             );
         } else {
-            $newMerchant = Merchant::create($validation);
-            if($newMerchant) {
+            $merchant = Merchant::create($validation->validated());
+            if($merchant) {
                 return (new ApiRule)->responsemessage(
                     "Created",
                     "New merchant created",
-                    $validation,
+                    $merchant,
                     201
                 );
             } else {
@@ -81,7 +81,7 @@ class MerchantController extends Controller
             return (new ApiRule)->responsemessage(
                 "OK",
                 "Merchant data found",
-                "",
+                $merchant,
                 200
             );
         }
@@ -97,7 +97,6 @@ class MerchantController extends Controller
         $validation = Validator::make(
             $request->all(),
             [
-                'account_id'=>'required|exists:accounts,id',
                 'name'=>'required|string',
                 'location_number'=>'required|string',
                 'time_open'=>'required',
@@ -122,11 +121,11 @@ class MerchantController extends Controller
                 422
             );
         } else {
-            if($merchant->update($validation)) {
+            if($merchant->update($validation->validated())) {
                 return (new ApiRule)->responsemessage(
                     "OK",
                     "Merchant data updated",
-                    $validation,
+                    $merchant,
                     200
                 );
             } else {

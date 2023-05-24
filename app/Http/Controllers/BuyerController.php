@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Buyer;
-use App\Models\Account;
 use Illuminate\Http\Request;
 
 class BuyerController extends Controller
@@ -36,7 +35,7 @@ class BuyerController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Buyer $buyer)
+    public function update(Request $request, Buyer $id)
     {
         $buyer = Buyer::findOrFail($id);
 
@@ -54,7 +53,7 @@ class BuyerController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Buyer $buyer)
+    public function destroy(Buyer $id)
     {
         $buyer = Buyer::findOrFail($id);
         $buyer->delete();

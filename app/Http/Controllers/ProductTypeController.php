@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Buyer;
 use Illuminate\Http\Request;
+use App\Models\ProductType;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\ApiRule;
-class BuyerController extends Controller
+class ProductTypeController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $buyers = Buyer::all();
+        $productTypes = ProductType::all();
         return (new ApiRule)->responsemessage(
-            "Buyers data",
-            $buyers,
+            "Product Types data",
+            $productTypes,
             200
         );
     }
@@ -29,12 +29,10 @@ class BuyerController extends Controller
         $validation = Validator::make(
             $request->all(),
             [
-                'account_id'=>'required|exists:accounts,id',
-                'name' => 'required|string',
-                'group' => 'required|string',
-                'group_id' => 'required'
+                'name'=>'required|string',
             ]
         );
+
         if($validation->fails()) {
             return (new ApiRule)->responsemessage(
                 "Please check your form",
@@ -42,16 +40,16 @@ class BuyerController extends Controller
                 422
             );
         } else {
-            $newBuyer = Buyer::create($validation->validated());
-            if($newBuyer) {
+            $newProductType = ProductType::create($validation->validated());
+            if($newProductType) {
                 return (new ApiRule)->responsemessage(
-                    "New buyer created",
-                    $newBuyer,
+                    "New product type created",
+                    $newProductType,
                     201
                 );
             } else {
                 return (new ApiRule)->responsemessage(
-                    "New buyer fail to be created",
+                    "New product type fail to be created",
                     "",
                     500
                 );
@@ -59,20 +57,23 @@ class BuyerController extends Controller
         }
     }
 
+    /**
+     * Display the specified resource.
+     */
     public function show(string $id)
     {
-        $buyer = Buyer::findOrFail($id);
+        $productType = ProductType::findOrFail($id);
 
-        if(!$buyer) {
+        if(!$productType) {
             return (new ApiRule)->responsemessage(
-                "Buyer data not found",
+                "Product type data not found",
                 "",
                 404
             );
         } else {
             return (new ApiRule)->responsemessage(
-                "Buyer data found",
-                $buyer,
+                "Product type data found",
+                $productType,
                 200
             );
         }
@@ -83,11 +84,11 @@ class BuyerController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $buyer = Buyer::findOrFail($id);
+        $productType = ProductType::findOrFail($id);
 
-        if(!$buyer) {
+        if(!$productType) {
             return (new ApiRule)->responsemessage(
-                "Buyer data not found",
+                "Product type data not found",
                 "",
                 404
             );
@@ -96,12 +97,10 @@ class BuyerController extends Controller
         $validation = Validator::make(
             $request->all(),
             [
-                'name' => 'required|string',
-                'group' => 'required|string',
-                'group_id' => 'required'
+                'name'=>'required|string',
             ]
         );
-        
+
         if($validation->fails()) {
             return (new ApiRule)->responsemessage(
                 "Please check your form",
@@ -109,15 +108,15 @@ class BuyerController extends Controller
                 422
             );
         } else {
-            if($buyer->update($validation->validated())) {
+            if($productType->update($validation->validated())) {
                 return (new ApiRule)->responsemessage(
-                    "Buyer data updated",
-                    $buyer,
+                    "Product data updated",
+                    $productType,
                     200
                 );
             } else {
                 return (new ApiRule)->responsemessage(
-                    "Buyer data fail to be updated",
+                    "Product data fail to be updated",
                     "",
                     500
                 );
@@ -130,26 +129,26 @@ class BuyerController extends Controller
      */
     public function destroy(string $id)
     {
-        $buyer = Buyer::findOrFail($id);
+        $productType = ProductType::findOrFail($id);
 
-        if(!$buyer) {
+        if(!$productType) {
             return (new ApiRule)->responsemessage(
-                "Buyer data not found",
+                "Product type data not found",
                 "",
                 404
             );
         }
 
-        if($buyer->delete()) {
+        if($productType->delete()) {
             return (new ApiRule)->responsemessage(
-                "Buyer data deleted",
-                $buyer,
+                "Product type data deleted",
+                $productType,
                 200
             );
         } else {
             return (new ApiRule)->responsemessage(
-                "Buyer data fail to be deleted",
-                $buyer,
+                "Product type data fail to be deleted",
+                $productType,
                 500
             );
         }

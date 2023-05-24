@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Merchant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\ApiRule;
 
 class MerchantController extends Controller
 {
@@ -13,7 +15,7 @@ class MerchantController extends Controller
     public function index()
     {
         $merchants = Merchant::all();
-        return response()->json($merchants)->header('Content-Type','application/json');
+        return response()->json($merchants);
     }
     
     /**
@@ -21,16 +23,22 @@ class MerchantController extends Controller
      */
     public function store(Request $request)
     {
-        $merchants = $request->validate([
-            'account_id'=>'required|exists:accounts,id',
-            'name'=>'required|string',
-            'location_number'=>'required|string',
-            'time_open'=>'required',
-            'time_close'=>'required'
-        ]);
+        $validation = Validator::make(
+            $request->all(),
+            [
+                'account_id'=>'required|exists:accounts,id',
+                'name'=>'required|string',
+                'location_number'=>'required|string',
+                'time_open'=>'required',
+                'time_close'=>'required'
+            ]
+        );
 
-        $newMerchant = Merchant::create($merchants);
-        return response()->json($newMerchant,201)->header('Content-Type','application/json');
+        if($validation->fails()) {
+            return (new ApiRule)->responsemessage("Unprocessable Entity","Please check your form",$validation->errors(),422);
+        } else {
+            return (new ApiRule)->responsemessage("Created","New merchant successfully created!",$validation,201);
+        }
     }
 
     /**
@@ -49,7 +57,7 @@ class MerchantController extends Controller
         ]);
 
         $merchant->update($validatedData);
-        return response()->json($merchant)->header('Content-Type','application/json');
+        return response()->json($merchant);
     }
 
     /**

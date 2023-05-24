@@ -21,33 +21,35 @@ class AccountController extends Controller
     }
 
     public function store(Request $request)
-    {
+{
+    $validator = Validator::make($request->all(), [
+        'username' => 'required|string',
+        'password' => 'required|string',
+        'email' => 'required|email',
+        'phone' => 'required|string',
+        'role' => 'required|string',
+        'verified_at' => 'date',
+        'token' => 'required|string'
+    ]);
+
+    if ($validator->fails()) {
+        return (new ApiRule)->responsemessage(
+            "Unprocessable Entity",
+            "Please check your form",
+            $validator->errors(),
+            422
+        );
+    } else {
+        $validatedData = $validator->validated();
+        $validatedData['password'] = bcrypt($validatedData['password']);
         
-        $validator = Validator::make($request->all(), [
-            'username' => 'required|string',
-            'password' => 'required|string',
-            'email' => 'required|email',
-            'phone' => 'required|string',
-            'role' => 'required|string',
-            'verified_at' => 'date',
-            'token' => 'required|string'
-        ]);
-       
-        if ($validator->fails()) {
-            return (new ApiRule)->responsemessage(
-                "Unprocessable Entity",
-                "Please check your form",
-                $validator->errors(),
-                422
-            );
-        } else {
-            $newAccount = Account::create($validator->validated()
-            );
-            if($newAccount){
+        $newAccount = Account::create($validatedData);
+        
+        if ($newAccount) {
             return (new ApiRule)->responsemessage(
                 "Created",
-                "New account successfully created!"
-                ,$validator,
+                "New account successfully created!",
+                $validator,
                 201
             );
         } else {
@@ -58,11 +60,9 @@ class AccountController extends Controller
                 500
             );
         }
-        }
-    
-        $validatedData = $validator->validated();
-        $validatedData['password'] = bcrypt($validatedData['password']);
     }
+}
+
 
     public function show (string $id)
 {

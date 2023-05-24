@@ -18,6 +18,7 @@ class Account extends Model
         'email',
         'phone',
         'role',
+        'verified_at',
         'token'
     ];
     protected $hidden = [

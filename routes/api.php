@@ -5,7 +5,13 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\BuyerController;
 use App\Http\Controllers\MerchantController;
-
+use App\Http\Controllers\WithdrawController;
+use App\Http\Controllers\TopupController;
+use App\Http\Controllers\ProductTypeController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderDetailController;
+use App\Http\Controllers\PaymentController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -24,3 +30,10 @@ use App\Http\Controllers\MerchantController;
 Route::apiResource('/account', AccountController::class);
 Route::apiResource('/buyer', BuyerController::class);
 Route::apiResource('/merchant', MerchantController::class);
+Route::apiResource('/withdraw', WithdrawController::class);
+Route::apiResource('/topup', TopupController::class);
+Route::apiResource('/product-type', ProductTypeController::class);
+Route::apiResource('/product', ProductController::class);
+Route::apiResource('/order', OrderController::class);
+Route::apiResource('/order-detail', OrderDetailController::class);
+Route::apiResource('/payment', PaymentController::class);

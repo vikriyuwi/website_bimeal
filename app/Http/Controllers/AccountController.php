@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Account;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 
 class AccountController extends Controller
@@ -13,24 +14,31 @@ class AccountController extends Controller
         return response()->json($accounts);
     }
 
-public function store(Request $request)
-{
-    $validatedData = $request->validate([
-        'username' => 'required|string',
-        'password' => 'required|string',
-        'email' => 'required|email',
-        'phone' => 'required|string',
-        'role' => 'required|string',
-        'verified_at' => 'date',
-        'token' => 'required|string'
-    ]);
-
-    $validatedData['password'] = bcrypt($validatedData['password']);
-
-    $newAccount = Account::create($validatedData);
-
-    return response()->json($newAccount, 201);
-}
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'username' => 'required|string',
+            'password' => 'required|string',
+            'email' => 'required|email',
+            'phone' => 'required|string',
+            'role' => 'required|string',
+            'verified_at' => 'date',
+            'token' => 'required|string'
+        ]);
+       
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+    
+        $validatedData = $validator->validated();
+        $validatedData['password'] = bcrypt($validatedData['password']);
+    
+        $newAccount = Account::create($validatedData);
+    
+        return response()->json($newAccount, 201);
+    }
+    
+    
 
 public function update(Request $request, string $id)
 {

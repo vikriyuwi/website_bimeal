@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\BuyerController;
+use App\Http\Controllers\MerchantController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,6 +21,6 @@ use App\Http\Controllers\AccountController;
 //     return $request->user();
 // });
 
-Route::resource('/account', AccountController::class);
-Route::resource('/buyer', AccountController::class);
-Route::resource('/merchant', AccountController::class);
+Route::apiResource('/account', AccountController::class);
+Route::apiResource('/buyer', BuyerController::class);
+Route::apiResource('/merchant', MerchantController::class);

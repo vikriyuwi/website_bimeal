@@ -79,7 +79,7 @@ public function update(Request $request, string $id)
         'email' => 'required|email',
         'phone' => 'required|string',
         'role' => 'required|string',
-        'verified_at' => 'required|date',
+        'verified_at' => 'date',
         'token' => 'required|string'
     ]);
 

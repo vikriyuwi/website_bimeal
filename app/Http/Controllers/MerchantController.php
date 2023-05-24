@@ -15,7 +15,12 @@ class MerchantController extends Controller
     public function index()
     {
         $merchants = Merchant::all();
-        return response()->json($merchants);
+        return (new ApiRule)->responsemessage(
+            "Ok",
+            "Merchants data",
+            $merchants,
+            200
+        );
     }
     
     /**
@@ -35,9 +40,50 @@ class MerchantController extends Controller
         );
 
         if($validation->fails()) {
-            return (new ApiRule)->responsemessage("Unprocessable Entity","Please check your form",$validation->errors(),422);
+            return (new ApiRule)->responsemessage(
+                "Unprocessable Entity",
+                "Please check your form",
+                $validation->errors(),
+                422
+            );
         } else {
-            return (new ApiRule)->responsemessage("Created","New merchant successfully created!",$validation,201);
+            $newMerchant = Merchant::create($validation);
+            if($newMerchant) {
+                return (new ApiRule)->responsemessage(
+                    "Created",
+                    "New merchant created",
+                    $validation,
+                    201
+                );
+            } else {
+                return (new ApiRule)->responsemessage(
+                    "Internal Server Error",
+                    "New merchant fail to be created",
+                    $validation,
+                    500
+                );
+            }
+        }
+    }
+
+    public function show(string $id)
+    {
+        $merchant = Merchant::findOrFail($id);
+
+        if(!$merchant) {
+            return (new ApiRule)->responsemessage(
+                "Not Found",
+                "Merchant data not found",
+                "",
+                404
+            );
+        } else {
+            return (new ApiRule)->responsemessage(
+                "OK",
+                "Merchant data found",
+                "",
+                200
+            );
         }
     }
 
@@ -48,16 +94,50 @@ class MerchantController extends Controller
     {
         $merchant = Merchant::findOrFail($id);
 
-        $validatedData = $request->validate([
-            'account_id'=>'required|exists:accounts,id',
-            'name'=>'required|string',
-            'location_number'=>'required|string',
-            'time_open'=>'required',
-            'time_close'=>'required'
-        ]);
+        $validation = Validator::make(
+            $request->all(),
+            [
+                'account_id'=>'required|exists:accounts,id',
+                'name'=>'required|string',
+                'location_number'=>'required|string',
+                'time_open'=>'required',
+                'time_close'=>'required'
+            ]
+        );
 
-        $merchant->update($validatedData);
-        return response()->json($merchant);
+        if(!$merchant) {
+            return (new ApiRule)->responsemessage(
+                "Not Found",
+                "Merchant data not found",
+                "",
+                404
+            );
+        }
+
+        if($validation->fails()) {
+            return (new ApiRule)->responsemessage(
+                "Unprocessable Entity",
+                "Please check your form",
+                $validation->errors(),
+                422
+            );
+        } else {
+            if($merchant->update($validation)) {
+                return (new ApiRule)->responsemessage(
+                    "OK",
+                    "Merchant data updated",
+                    $validation,
+                    200
+                );
+            } else {
+                return (new ApiRule)->responsemessage(
+                    "Internal Server Error",
+                    "Merchant data fail to be updated",
+                    $validation,
+                    500
+                );
+            }
+        }
     }
 
     /**
@@ -66,8 +146,30 @@ class MerchantController extends Controller
     public function destroy(string $id)
     {
         $merchant = Merchant::findOrFail($id);
-        $merchant->delete();
 
-        return response()->json(['message' => 'Account deleted successfully']);
+        if(!$merchant) {
+            return (new ApiRule)->responsemessage(
+                "Not Found",
+                "Merchant data not found",
+                "",
+                404
+            );
+        }
+
+        if($merchant->delete()) {
+            return (new ApiRule)->responsemessage(
+                "Ok",
+                "Merchant data deleted",
+                $merchant,
+                201
+            );
+        } else {
+            return (new ApiRule)->responsemessage(
+                "Internal Server Error",
+                "Merchant data fail to be deleted",
+                $merchant,
+                500
+            );
+        }
     }
 }

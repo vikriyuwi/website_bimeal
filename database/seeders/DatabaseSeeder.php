@@ -21,17 +21,17 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         ProductType::create([
-            'id'=>Uuid::generate()->string,
+            // 'id'=>Uuid::generate()->string,
             'name'=>'Food'
         ]);
 
         ProductType::create([
-            'id'=>Uuid::generate()->string,
+            // 'id'=>Uuid::generate()->string,
             'name'=>'Baverage'
         ]);
 
         ProductType::create([
-            'id'=>Uuid::generate()->string,
+            // 'id'=>Uuid::generate()->string,
             'name'=>'Snack'
         ]);
     }

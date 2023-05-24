@@ -91,7 +91,6 @@ class MerchantController extends Controller
         $validation = Validator::make(
             $request->all(),
             [
-                'account_id'=>'required|exists:accounts,id',
                 'name'=>'required|string',
                 'location_number'=>'required|string',
                 'time_open'=>'required',

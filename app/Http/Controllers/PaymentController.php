@@ -24,7 +24,7 @@ class PaymentController extends Controller
     $validator = Validator::make($request->all(), [
         'order_id'=>'required|exists:orders,id',
         'bill'=>'required|numeric',
-        'status'=>'required|string'
+        'status'=>'required|in:PROCESS,SUCCESS,FAIL'
     ]);
 
     if ($validator->fails()) {
@@ -60,7 +60,7 @@ class PaymentController extends Controller
         if(!$payment) {
             return (new ApiRule)->responsemessage(
                 "Payment not found",
-                null,
+                "",
                 404
             );
         } else {
@@ -74,14 +74,13 @@ class PaymentController extends Controller
 
     public function update(Request $request, string $id)
     {
-        $payment = Payment::findOrFail($id);
+        $payment = Payment::find($id);
 
         $validation = Validator::make(
             $request->all(),
             [
-                'order_id'=>'required|exists:orders,id',
                 'bill'=>'required|integer',
-                'status'=>'required|string'
+                'status'=>'required|in:PROCESS,SUCCESS,FAIL'
             ]
         );
 
@@ -122,7 +121,7 @@ class PaymentController extends Controller
         if ($payment){
             return (new ApiRule)->responsemessage(
                 "Payment data not found",
-                $payment,
+                "",
                 404
             );
         }

@@ -13,10 +13,10 @@ class WithdrawController extends Controller
      */
     public function index()
     {
-        $merchants = Withdraw::all();
+        $withdraw = Withdraw::all();
         return (new ApiRule)->responsemessage(
-            "Merchants data",
-            $merchants,
+            "Withdraws data",
+            $withdraw,
             200
         );
     }
@@ -105,13 +105,13 @@ class WithdrawController extends Controller
         } else {
             if($withdraw->update($validation->validated())) {
                 return (new ApiRule)->responsemessage(
-                    "New withdraw created",
+                    "Withdraw data updated",
                     $withdraw,
                     200
                 );
             } else {
                 return (new ApiRule)->responsemessage(
-                    "New withdraw fail to be created",
+                    "Withdraw data fail to be updated",
                     "",
                     500
                 );

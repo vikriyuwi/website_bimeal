@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Buyer;
 use Illuminate\Http\Request;
+use App\Models\Topup;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\ApiRule;
-class BuyerController extends Controller
+class TopupController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $buyers = Buyer::all();
+        $topups = Topup::all();
         return (new ApiRule)->responsemessage(
-            "Buyers data",
-            $buyers,
+            "Topups data",
+            $topups,
             200
         );
     }
@@ -29,12 +29,12 @@ class BuyerController extends Controller
         $validation = Validator::make(
             $request->all(),
             [
-                'account_id'=>'required|exists:accounts,id',
-                'name' => 'required|string',
-                'group' => 'required|string',
-                'group_id' => 'required'
+                'buyer_id'=>'required|exists:buyers,id',
+                'debt'=>'required|numeric',
+                'status'=>'required|in:PROCESS,SUCCESS,FAIL',
             ]
         );
+
         if($validation->fails()) {
             return (new ApiRule)->responsemessage(
                 "Please check your form",
@@ -42,16 +42,16 @@ class BuyerController extends Controller
                 422
             );
         } else {
-            $newBuyer = Buyer::create($validation->validated());
-            if($newBuyer) {
+            $newTopup = Topup::create($validation->validated());
+            if($newTopup) {
                 return (new ApiRule)->responsemessage(
-                    "New buyer created",
-                    $newBuyer,
-                    200
+                    "New topup created",
+                    $newTopup,
+                    201
                 );
             } else {
                 return (new ApiRule)->responsemessage(
-                    "New buyer fail to be created",
+                    "New topup fail to be created",
                     "",
                     500
                 );
@@ -59,20 +59,23 @@ class BuyerController extends Controller
         }
     }
 
+    /**
+     * Display the specified resource.
+     */
     public function show(string $id)
     {
-        $buyer = Buyer::findOrFail($id);
+        $topup = Topup::findOrFail($id);
 
-        if(!$buyer) {
+        if(!$topup) {
             return (new ApiRule)->responsemessage(
-                "Buyer data not found",
+                "Topup data not found",
                 "",
                 404
             );
         } else {
             return (new ApiRule)->responsemessage(
-                "Buyer data found",
-                $buyer,
+                "Topup data found",
+                $topup,
                 200
             );
         }
@@ -83,11 +86,11 @@ class BuyerController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $buyer = Buyer::findOrFail($id);
+        $topup = Topup::findOrFail($id);
 
-        if(!$buyer) {
+        if(!$topup) {
             return (new ApiRule)->responsemessage(
-                "Buyer data not found",
+                "Topup data not found",
                 "",
                 404
             );
@@ -96,12 +99,11 @@ class BuyerController extends Controller
         $validation = Validator::make(
             $request->all(),
             [
-                'name' => 'required|string',
-                'group' => 'required|string',
-                'group_id' => 'required'
+                'debt'=>'required|numeric',
+                'status'=>'required|in:PROCESS,SUCCESS,FAIL',
             ]
         );
-        
+
         if($validation->fails()) {
             return (new ApiRule)->responsemessage(
                 "Please check your form",
@@ -109,15 +111,15 @@ class BuyerController extends Controller
                 422
             );
         } else {
-            if($buyer->update($validation->validated())) {
+            if($topup->update($validation->validated())) {
                 return (new ApiRule)->responsemessage(
-                    "Buyer data updated",
-                    $buyer,
+                    "Topup data updated",
+                    $topup,
                     200
                 );
             } else {
                 return (new ApiRule)->responsemessage(
-                    "Buyer data fail to be updated",
+                    "Topup data fail to be updated",
                     "",
                     500
                 );
@@ -130,26 +132,26 @@ class BuyerController extends Controller
      */
     public function destroy(string $id)
     {
-        $buyer = Buyer::findOrFail($id);
+        $topup = Topup::findOrFail($id);
 
-        if(!$buyer) {
+        if(!$topup) {
             return (new ApiRule)->responsemessage(
-                "Buyer data not found",
+                "Topup data not found",
                 "",
                 404
             );
         }
 
-        if($buyer->delete()) {
+        if($topup->delete()) {
             return (new ApiRule)->responsemessage(
-                "Buyer data deleted",
-                $buyer,
+                "Topup data deleted",
+                $topup,
                 200
             );
         } else {
             return (new ApiRule)->responsemessage(
-                "Buyer data fail to be deleted",
-                $buyer,
+                "Topup data fail to be deleted",
+                $topup,
                 500
             );
         }

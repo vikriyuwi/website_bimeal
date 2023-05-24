@@ -35,5 +35,5 @@ Route::apiResource('/topup', TopupController::class);
 Route::apiResource('/product-type', ProductTypeController::class);
 Route::apiResource('/product', ProductController::class);
 Route::apiResource('/order', OrderController::class);
-Route::apiResource('/order-detail', OrderDetailController::class);
+// Route::apiResource('/order-detail', OrderDetailController::class);
 Route::apiResource('/payment', PaymentController::class);

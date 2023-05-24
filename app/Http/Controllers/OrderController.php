@@ -30,7 +30,6 @@ class OrderController extends Controller
             $request->all(),
             [
                 'buyer_id'=>'required|exists:buyers,id',
-                'status'=>'required|in:NEW,PROCESS,DONE, CANCELED'
             ]
         );
 
@@ -41,7 +40,9 @@ class OrderController extends Controller
                 422
             );
         } else {
-            $newOrder = Order::create($validation->validated());
+            $validated = $validation->validated();
+            $validated['status'] = "NEW";
+            $newOrder = Order::create($validated);
             if($newOrder) {
                 return (new ApiRule)->responsemessage(
                     "New order created",
@@ -83,7 +84,7 @@ class OrderController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(string $id)
     {
         $order = Order::find($id);
 
@@ -94,37 +95,59 @@ class OrderController extends Controller
                 404
             );
         }
-
-        $validation = Validator::make(
-            $request->all(),
-            [
-                'status'=>'required|in:NEW,PROCESS,DONE, CANCELED'
-            ]
-        );
-
-        if($validation->fails()) {
+        $newStatus = "";
+        switch ($order->status) {
+            case "NEW":
+                $newStatus = "PROCESS";
+                break;
+            case "PROCESS":
+                $newStatus = "DONE";
+                break;
+            default:
+                $newStatus = $order->status;
+                break;
+        }
+        $validated['status'] = $newStatus;
+        if($order->update($validated)) {
             return (new ApiRule)->responsemessage(
-                "Please check your form",
-                $validation->errors(),
-                422
+                "Order data updated",
+                $order,
+                201
             );
         } else {
-            if($order->update($validation->validated())) {
-                return (new ApiRule)->responsemessage(
-                    "Order data updated",
-                    $order,
-                    201
-                );
-            } else {
-                return (new ApiRule)->responsemessage(
-                    "Order data fail to be updated",
-                    "",
-                    500
-                );
-            }
+            return (new ApiRule)->responsemessage(
+                "Order data fail to be updated",
+                "",
+                500
+            );
         }
     }
+    public function updatefail(string $id)
+    {
+        $order = Order::find($id);
 
+        if(!$order) {
+            return (new ApiRule)->responsemessage(
+                "Order data not found",
+                "",
+                404
+            );
+        }
+        $validated['status'] = "FAIL";
+        if($order->update($validated)) {
+            return (new ApiRule)->responsemessage(
+                "Order data updated",
+                $order,
+                201
+            );
+        } else {
+            return (new ApiRule)->responsemessage(
+                "Order data fail to be updated",
+                "",
+                500
+            );
+        }
+    }
     /**
      * Remove the specified resource from storage.
      */

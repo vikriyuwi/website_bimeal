@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Account;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\AccountApi;
 use Illuminate\Http\Request;
 
 class AccountController extends Controller
@@ -16,6 +17,7 @@ class AccountController extends Controller
 
     public function store(Request $request)
     {
+        
         $validator = Validator::make($request->all(), [
             'username' => 'required|string',
             'password' => 'required|string',
@@ -37,8 +39,13 @@ class AccountController extends Controller
     
         return response()->json($newAccount, 201);
     }
-    
-    
+
+    public function show (string $id)
+{
+    $account = Account::findOrFail($id);
+
+    return response()->json($account);
+}
 
 public function update(Request $request, string $id)
 {

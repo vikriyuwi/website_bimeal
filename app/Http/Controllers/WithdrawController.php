@@ -64,7 +64,7 @@ class WithdrawController extends Controller
      */
     public function show(string $id)
     {
-        $withdraw = Withdraw::findOrFail($id);
+        $withdraw = Withdraw::find($id);
 
         if(!$withdraw) {
             return (new ApiRule)->responsemessage(
@@ -86,7 +86,7 @@ class WithdrawController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $withdraw = Withdraw::findOrFail($id);
+        $withdraw = Withdraw::find($id);
 
         $validation = Validator::make(
             $request->all(),
@@ -124,7 +124,7 @@ class WithdrawController extends Controller
      */
     public function destroy(string $id)
     {
-        $withdraw = Withdraw::findOrFail($id);
+        $withdraw = Withdraw::find($id);
 
         if(!$withdraw) {
             return (new ApiRule)->responsemessage(

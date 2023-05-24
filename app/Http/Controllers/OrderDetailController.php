@@ -3,20 +3,20 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Product;
+use App\Models\OrderDetail;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\ApiRule;
-class ProductController extends Controller
+class OrderDetailController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $products = Product::all();
+        $orderDetails = OrderDetail::all();
         return (new ApiRule)->responsemessage(
-            "Products data",
-            $products,
+            "Order details data",
+            $orderDetails,
             200
         );
     }
@@ -29,11 +29,9 @@ class ProductController extends Controller
         $validation = Validator::make(
             $request->all(),
             [
-                'merchant_id'=>'required|exists:merchants,id',
-                'product_type_id'=>'required|exists:product_types,id',
-                'name'=>'required|string',
-                'price'=>'required|numeric',
-                'stock'=>'required|numeric'
+                'order_id'=>'required|exists:orders,id',
+                'product_id'=>'required|exists:products,id',
+                'quantity'=>'required|numeric'
             ]
         );
 
@@ -44,16 +42,16 @@ class ProductController extends Controller
                 422
             );
         } else {
-            $newProduct = Product::create($validation->validated());
-            if($newProduct) {
+            $newOrderDetail = OrderDetail::create($validation->validated());
+            if($newOrderDetail) {
                 return (new ApiRule)->responsemessage(
-                    "New product created",
-                    $newProduct,
+                    "New order detail created",
+                    $newOrderDetail,
                     201
                 );
             } else {
                 return (new ApiRule)->responsemessage(
-                    "New product fail to be created",
+                    "New order detail fail to be created",
                     "",
                     500
                 );
@@ -66,18 +64,18 @@ class ProductController extends Controller
      */
     public function show(string $id)
     {
-        $product = Product::find($id);
+        $orderDetail = OrderDetail::find($id);
 
-        if(!$product) {
+        if(!$orderDetail) {
             return (new ApiRule)->responsemessage(
-                "Product data not found",
+                "Order detail data not found",
                 "",
                 404
             );
         } else {
             return (new ApiRule)->responsemessage(
-                "Product data found",
-                $product,
+                "Order detail data found",
+                $orderDetail,
                 200
             );
         }
@@ -88,11 +86,11 @@ class ProductController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $product = Product::find($id);
+        $orderDetail = OrderDetail::find($id);
 
-        if(!$product) {
+        if(!$orderDetail) {
             return (new ApiRule)->responsemessage(
-                "Product data not found",
+                "Order detail data not found",
                 "",
                 404
             );
@@ -101,10 +99,7 @@ class ProductController extends Controller
         $validation = Validator::make(
             $request->all(),
             [
-                'product_type_id'=>'required|exists:product_types,id',
-                'name'=>'required|string',
-                'price'=>'required|numeric',
-                'stock'=>'required|numeric'
+                'quantity'=>'required|numeric'
             ]
         );
 
@@ -115,15 +110,15 @@ class ProductController extends Controller
                 422
             );
         } else {
-            if($product->update($validation->validated())) {
+            if($orderDetail->update($validation->validated())) {
                 return (new ApiRule)->responsemessage(
-                    "Product data updated",
-                    $product,
-                    200
+                    "Order data updated",
+                    $orderDetail,
+                    201
                 );
             } else {
                 return (new ApiRule)->responsemessage(
-                    "Product data fail to be updated",
+                    "Order data fail to be updated",
                     "",
                     500
                 );
@@ -136,26 +131,26 @@ class ProductController extends Controller
      */
     public function destroy(string $id)
     {
-        $product = Product::find($id);
+        $orderDetail = OrderDetail::find($id);
 
-        if(!$product) {
+        if(!$orderDetail) {
             return (new ApiRule)->responsemessage(
-                "Product data not found",
+                "Order data not found",
                 "",
                 404
             );
         }
 
-        if($product->delete()) {
+        if($orderDetail->delete()) {
             return (new ApiRule)->responsemessage(
-                "Product data deleted",
-                $product,
+                "Order detail data deleted",
+                $orderDetail,
                 200
             );
         } else {
             return (new ApiRule)->responsemessage(
-                "Product data fail to be deleted",
-                $product,
+                "Order detail data fail to be deleted",
+                $orderDetail,
                 500
             );
         }

@@ -64,7 +64,7 @@ class TopupController extends Controller
      */
     public function show(string $id)
     {
-        $topup = Topup::findOrFail($id);
+        $topup = Topup::find($id);
 
         if(!$topup) {
             return (new ApiRule)->responsemessage(
@@ -86,7 +86,7 @@ class TopupController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $topup = Topup::findOrFail($id);
+        $topup = Topup::find($id);
 
         if(!$topup) {
             return (new ApiRule)->responsemessage(
@@ -132,7 +132,7 @@ class TopupController extends Controller
      */
     public function destroy(string $id)
     {
-        $topup = Topup::findOrFail($id);
+        $topup = Topup::find($id);
 
         if(!$topup) {
             return (new ApiRule)->responsemessage(

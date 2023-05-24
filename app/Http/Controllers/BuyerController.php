@@ -61,7 +61,7 @@ class BuyerController extends Controller
 
     public function show(string $id)
     {
-        $buyer = Buyer::findOrFail($id);
+        $buyer = Buyer::find($id);
 
         if(!$buyer) {
             return (new ApiRule)->responsemessage(
@@ -83,7 +83,7 @@ class BuyerController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $buyer = Buyer::findOrFail($id);
+        $buyer = Buyer::find($id);
 
         if(!$buyer) {
             return (new ApiRule)->responsemessage(
@@ -130,7 +130,7 @@ class BuyerController extends Controller
      */
     public function destroy(string $id)
     {
-        $buyer = Buyer::findOrFail($id);
+        $buyer = Buyer::find($id);
 
         if(!$buyer) {
             return (new ApiRule)->responsemessage(

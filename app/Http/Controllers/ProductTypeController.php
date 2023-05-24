@@ -62,7 +62,7 @@ class ProductTypeController extends Controller
      */
     public function show(string $id)
     {
-        $productType = ProductType::findOrFail($id);
+        $productType = ProductType::find($id);
 
         if(!$productType) {
             return (new ApiRule)->responsemessage(
@@ -84,7 +84,7 @@ class ProductTypeController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $productType = ProductType::findOrFail($id);
+        $productType = ProductType::find($id);
 
         if(!$productType) {
             return (new ApiRule)->responsemessage(
@@ -129,7 +129,7 @@ class ProductTypeController extends Controller
      */
     public function destroy(string $id)
     {
-        $productType = ProductType::findOrFail($id);
+        $productType = ProductType::find($id);
 
         if(!$productType) {
             return (new ApiRule)->responsemessage(

@@ -64,7 +64,7 @@ class MerchantController extends Controller
 
     public function show(string $id)
     {
-        $merchant = Merchant::findOrFail($id);
+        $merchant = Merchant::find($id);
 
         if(!$merchant) {
             return (new ApiRule)->responsemessage(
@@ -86,7 +86,7 @@ class MerchantController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $merchant = Merchant::findOrFail($id);
+        $merchant = Merchant::find($id);
 
         $validation = Validator::make(
             $request->all(),
@@ -135,7 +135,7 @@ class MerchantController extends Controller
      */
     public function destroy(string $id)
     {
-        $merchant = Merchant::findOrFail($id);
+        $merchant = Merchant::find($id);
 
         if(!$merchant) {
             return (new ApiRule)->responsemessage(

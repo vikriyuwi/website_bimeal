@@ -16,6 +16,7 @@ class Buyer extends Model
     use HasFactory,HasUuids;
     protected $fillable = [    
         'account_id',
+        'name',
         'group',
         'group_id',
     ];

@@ -6,6 +6,11 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\ApiRule;
+use App\Models\OrderDetail;
+use App\Models\Payment;
+use App\Models\Product;
+use Illuminate\Support\Facades\DB;
+
 class OrderController extends Controller
 {
     /**
@@ -24,7 +29,7 @@ class OrderController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request,$id)
     {
         $validation = Validator::make(
             $request->all(),
@@ -73,6 +78,10 @@ class OrderController extends Controller
                 404
             );
         } else {
+            $order->orderDetails;
+            $payment = $order->payments()->orderBy('updated_at','DESC')->first();
+            // $order['detail'] = $detail;
+            $order['payment'] = $payment;
             return (new ApiRule)->responsemessage(
                 "Order data found",
                 $order,
@@ -87,14 +96,64 @@ class OrderController extends Controller
     public function update(string $id)
     {
         $order = Order::find($id);
+        $pay = Order::find($id)->payments()->orderBy('updated_at','DESC')->first();
+        $payment = Payment::find($pay->id);
 
         if(!$order) {
             return (new ApiRule)->responsemessage(
                 "Order data not found",
-                "",
+                null,
                 404
             );
         }
+
+        if($order->status == 'FAIL') {
+            return (new ApiRule)->responsemessage(
+                "Cannot process due the order canceled",
+                null,
+                422
+            );
+        }
+
+        if($payment->status == 'FAIL') {
+            return (new ApiRule)->responsemessage(
+                "Last payment failed",
+                null,
+                422
+            );
+        }
+
+        $transaction = true;
+
+        $details = OrderDetail::with('product')->where('order_id','=',$id)->get();
+        foreach ($details as $d) {
+            if ($d->quantity > $d->product->stock) {
+                try {
+                    DB::transaction(function () use ($order,$payment) {
+                        $data['status'] = "FAIL";
+
+                        $order->update($data);
+                        $payment->update($data);
+                    });
+                } catch (\Throwable $th) {
+                    $transaction = false;
+                }
+                if($transaction) {
+                    return (new ApiRule)->responsemessage(
+                        "Order and payment canceled due the minimum stock",
+                        null,
+                        200
+                    );
+                } else {
+                    return (new ApiRule)->responsemessage(
+                        "Server error",
+                        "",
+                        500
+                    );
+                }
+            }
+        }
+
         $newStatus = "";
         switch ($order->status) {
             case "NEW":
@@ -107,8 +166,28 @@ class OrderController extends Controller
                 $newStatus = $order->status;
                 break;
         }
-        $validated['status'] = $newStatus;
-        if($order->update($validated)) {
+
+        try {
+            DB::transaction(function () use ($order,$details,$newStatus,$payment) {
+                foreach ($details as $d) {
+                    $product = Product::find($d->product->id);
+                    $data['stock'] = $product->stock - $d->quantity;
+                    $product->update($data);
+                }
+
+                $data['status'] = $newStatus;
+                $order->update($data);
+                if($newStatus == 'PROCESS')
+                {
+                    $data['status'] = 'SUCCESS';
+                    $payment->update($data);
+                }
+            });
+        } catch (\Throwable $th) {
+            $transaction = false;
+        }
+
+        if($transaction) {
             return (new ApiRule)->responsemessage(
                 "Order data updated",
                 $order,

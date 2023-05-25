@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Model\Order;
+use App\Models\Order;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Payment extends Model
 {
@@ -14,6 +14,9 @@ class Payment extends Model
         'order_id',
         'bill',
         'status'
+    ];
+    protected $hidden = [
+        'order_id'
     ];
     public function order(): BelongsTo
     {

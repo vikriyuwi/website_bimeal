@@ -16,6 +16,9 @@ class OrderDetail extends Model
         'product_id',
         'quantity'
     ];
+    protected $hidden = [
+        'order_id',
+    ];
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

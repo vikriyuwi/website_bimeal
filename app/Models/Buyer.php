@@ -19,7 +19,6 @@ class Buyer extends Model
         'password',
         'email',
         'phone',
-        'role',
         'verified_at',
         'token',
         'name',

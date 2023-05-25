@@ -6,26 +6,36 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\ApiRule;
+
 class ProductController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(string $merchant)
     {
-        $products = Product::all();
-        return (new ApiRule)->responsemessage(
-            "Products data",
-            $products,
-            200
-        );
+        $products = Product::with('productType')->where('merchant_id','=',$merchant)->get();
+        if(!$products) {
+            return (new ApiRule)->responsemessage(
+                "Products data not found",
+                "",
+                404
+            );
+        } else {
+            return (new ApiRule)->responsemessage(
+                "Products data found",
+                $products,
+                200
+            );
+        }
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(string $merchant,Request $request)
     {
+        $request['merchant_id'] = $merchant;
         $validation = Validator::make(
             $request->all(),
             [
@@ -44,7 +54,9 @@ class ProductController extends Controller
                 422
             );
         } else {
-            $newProduct = Product::create($validation->validated());
+            $validated = $validation->validated();
+            $validated['merchant_id'] = $merchant;
+            $newProduct = Product::create($validated);
             if($newProduct) {
                 return (new ApiRule)->responsemessage(
                     "New product created",
@@ -64,7 +76,7 @@ class ProductController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $merchant,string $id)
     {
         $product = Product::find($id);
 
@@ -75,18 +87,26 @@ class ProductController extends Controller
                 404
             );
         } else {
-            return (new ApiRule)->responsemessage(
-                "Product data found",
-                $product,
-                200
-            );
+            if($product->merchant_id == $merchant) {
+                return (new ApiRule)->responsemessage(
+                    "Product data found",
+                    $product,
+                    200
+                );
+            } else {
+                return (new ApiRule)->responsemessage(
+                    "Product data not own by this merchant",
+                    null,
+                    200
+                );
+            }
         }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(string $merchant, Request $request, string $id)
     {
         $product = Product::find($id);
 
@@ -95,6 +115,14 @@ class ProductController extends Controller
                 "Product data not found",
                 "",
                 404
+            );
+        }
+
+        if($product->merchant_id != $merchant) {
+            return (new ApiRule)->responsemessage(
+                "Product data not own by this merchant",
+                null,
+                200
             );
         }
 
@@ -134,7 +162,7 @@ class ProductController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $merchant, string $id)
     {
         $product = Product::find($id);
 
@@ -143,6 +171,14 @@ class ProductController extends Controller
                 "Product data not found",
                 "",
                 404
+            );
+        }
+
+        if($product->merchant_id != $merchant) {
+            return (new ApiRule)->responsemessage(
+                "Product data not own by this merchant",
+                null,
+                200
             );
         }
 

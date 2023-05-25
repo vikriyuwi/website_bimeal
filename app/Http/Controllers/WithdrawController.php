@@ -11,21 +11,30 @@ class WithdrawController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(string $merchant)
     {
-        $withdraw = Withdraw::all();
-        return (new ApiRule)->responsemessage(
-            "Withdraws data",
-            $withdraw,
-            200
-        );
+        $withdraws = Withdraw::where('merchant_id','=',$merchant)->get();
+        if(!$withdraws) {
+            return (new ApiRule)->responsemessage(
+                "Withdraws data not found",
+                "",
+                404
+            );
+        } else {
+            return (new ApiRule)->responsemessage(
+                "Withdraws data found",
+                $withdraws,
+                200
+            );
+        }
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(string $merchant,Request $request)
     {
+        $request['merchant_id'] = $merchant;
         $validation = Validator::make(
             $request->all(),
             [
@@ -62,7 +71,7 @@ class WithdrawController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $merchant,string $id)
     {
         $withdraw = Withdraw::find($id);
 
@@ -73,20 +82,36 @@ class WithdrawController extends Controller
                 404
             );
         } else {
-            return (new ApiRule)->responsemessage(
-                "Withdraw data found",
-                $withdraw,
-                200
-            );
+            if($withdraw->merchant_id == $merchant) {
+                return (new ApiRule)->responsemessage(
+                    "Withdraw data found",
+                    $withdraw,
+                    200
+                );
+            } else {
+                return (new ApiRule)->responsemessage(
+                    "Withdraw data not own by this merchant",
+                    null,
+                    422
+                );
+            }
         }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(string $merchant, Request $request, string $id)
     {
         $withdraw = Withdraw::find($id);
+
+        if($withdraw->merchant_id != $merchant) {
+            return (new ApiRule)->responsemessage(
+                "Withdraw data is not own by this merchant",
+                null,
+                422
+            );
+        }    
 
         $validation = Validator::make(
             $request->all(),

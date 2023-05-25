@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('phone',16);
             $table->string('role',256);
             $table->dateTime('vefiried_at')->nullable();
-            $table->string('token',256);
+            $table->string('token',256)->nullable();
             $table->timestamps();
         });
     }

@@ -26,9 +26,9 @@ class AccountController extends Controller
         'password' => 'required|string',
         'email' => 'required|email',
         'phone' => 'required|string',
-        'role' => 'required|string',
+        'role' => 'required|in:STUDENT,LECTURER,STAFF,OTHER',
         'verified_at' => 'date',
-        'token' => 'required|string'
+        'token' => 'string'
     ]);
 
     if ($validator->fails()) {

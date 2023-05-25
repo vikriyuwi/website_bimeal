@@ -42,7 +42,7 @@ Route::prefix('/merchant')->group(function() {
     Route::post('/{merchant}/product',[ProductController::class,'store']);
     Route::get('/{merchant}/product/{product}',[ProductController::class,'show']);
     Route::put('/{merchant}/product/{product}',[ProductController::class,'update']);
-    Route::delete('/{merchant}/product/{product}',[ProductController::class,'delete']);
+    Route::delete('/{merchant}/product/{product}',[ProductController::class,'destroy']);
     // withdraw
     Route::get('/{merchant}/withdraw',[WithdrawController::class,'index']);
     Route::post('/{merchant}/withdraw',[WithdrawController::class,'store']);
@@ -58,7 +58,8 @@ Route::prefix('/order')->group(function(){
     Route::get('/{order}/pay',[PaymentController::class,'store']);
     Route::get('/{order}/payment',[PaymentController::class,'index']);
     Route::get('/{order}/payment-history',[PaymentController::class,'history']);
-    Route::get('/{order}/detail',[OrderDetailController::class,'index']);
+    Route::get('/{order}/item',[OrderDetailController::class,'index']);
+    Route::post('/{order}/item',[OrderDetailController::class,'store']);
+    Route::put('/{order}/item/{detail}',[OrderDetailController::class,'update']);
+    Route::delete('/{order}/item/{detail}',[OrderDetailController::class,'destroy']);
 });
-// Route::apiResource('/payment', PaymentController::class);
-// Route::apiResource('/order-detail', OrderDetailController::class);

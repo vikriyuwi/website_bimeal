@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\OrderDetail;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\ApiRule;
+use App\Models\Product;
+
 class OrderDetailController extends Controller
 {
     /**
@@ -24,8 +26,9 @@ class OrderDetailController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(string $order,Request $request)
     {
+        $request['order_id'] = $order;
         $validation = Validator::make(
             $request->all(),
             [
@@ -34,6 +37,15 @@ class OrderDetailController extends Controller
                 'quantity'=>'required|numeric'
             ]
         );
+
+        $stock = Product::find($request->product_id)->stock;
+        if($request->quantity > $stock) {
+            return (new ApiRule)->responsemessage(
+                "Order reach the maximum stock",
+                null,
+                422
+            );
+        }
 
         if($validation->fails()) {
             return (new ApiRule)->responsemessage(
@@ -84,7 +96,7 @@ class OrderDetailController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(string $order,Request $request, string $id)
     {
         $orderDetail = OrderDetail::find($id);
 
@@ -93,6 +105,14 @@ class OrderDetailController extends Controller
                 "Order detail data not found",
                 "",
                 404
+            );
+        }
+
+        if($orderDetail->order_id != $order) {
+            return (new ApiRule)->responsemessage(
+                "This product not in this order detail list",
+                null,
+                422
             );
         }
 
@@ -110,6 +130,15 @@ class OrderDetailController extends Controller
                 422
             );
         } else {
+            $stock = Product::find($orderDetail->product_id)->stock;
+            if($request->quantity > $stock) {
+                return (new ApiRule)->responsemessage(
+                    "Order reach the maximum stock",
+                    null,
+                    422
+                );
+            }
+
             if($orderDetail->update($validation->validated())) {
                 return (new ApiRule)->responsemessage(
                     "Order data updated",
@@ -129,7 +158,7 @@ class OrderDetailController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $order,string $id)
     {
         $orderDetail = OrderDetail::find($id);
 
@@ -148,11 +177,19 @@ class OrderDetailController extends Controller
                 200
             );
         } else {
-            return (new ApiRule)->responsemessage(
-                "Order detail data fail to be deleted",
-                $orderDetail,
-                500
-            );
+            if($orderDetail->order_id != $order) {
+                return (new ApiRule)->responsemessage(
+                    "This product not in this order detail list",
+                    null,
+                    422
+                );
+            } else {
+                return (new ApiRule)->responsemessage(
+                    "Order detail data fail to be deleted",
+                    $orderDetail,
+                    500
+                );
+            }
         }
     }
 }

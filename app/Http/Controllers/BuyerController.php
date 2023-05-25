@@ -31,7 +31,7 @@ class BuyerController extends Controller
             [
                 'account_id'=>'required|exists:accounts,id',
                 'name' => 'required|string',
-                'group' => 'required|string',
+                'group' => 'required|string|in:STUDENT,LECTURER,STAFF,OTHER',
                 'group_id' => 'required'
             ]
         );

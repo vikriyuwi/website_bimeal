@@ -15,7 +15,13 @@ class Merchant extends Model
 {
     use HasFactory,HasUuids;
     protected $fillable = [
-        'account_id',
+        'username',
+        'password',
+        'email',
+        'phone',
+        'role',
+        'verified_at',
+        'token',
         'name',
         'location_number',
         'time_open',

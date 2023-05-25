@@ -26,11 +26,6 @@ class Buyer extends Model
         'group',
         'group_id',
     ];
-
-    public function account(): BelongsTo
-    {
-        return $this->belongsTo(Account::class);
-    }
     public function topups(): HasMany
     {
         return $this->hasMany(Topup::class);

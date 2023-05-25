@@ -27,9 +27,6 @@ class Merchant extends Model
         'time_open',
         'time_close'
     ];
-    public function account(): BelongsTo {
-        return $this->belongsTo(Account::class);
-    }
     public function withdraws(): HasMany
     {
         return $this->hasMany(Withdraw::class);

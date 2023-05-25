@@ -31,7 +31,6 @@ class TopupController extends Controller
             [
                 'buyer_id'=>'required|exists:buyers,id',
                 'debt'=>'required|numeric',
-                'status'=>'required|in:PROCESS,SUCCESS,FAIL',
             ]
         );
 
@@ -42,7 +41,9 @@ class TopupController extends Controller
                 422
             );
         } else {
-            $newTopup = Topup::create($validation->validated());
+            $validated = $validation->validated();
+            $validated['status'] = "PROCESS";
+            $newTopup = Topup::create($validated);
             if($newTopup) {
                 return (new ApiRule)->responsemessage(
                     "New topup created",
@@ -95,35 +96,26 @@ class TopupController extends Controller
                 404
             );
         }
-
-        $validation = Validator::make(
-            $request->all(),
-            [
-                'debt'=>'required|numeric',
-                'status'=>'required|in:PROCESS,SUCCESS,FAIL',
-            ]
-        );
-
-        if($validation->fails()) {
+        $validated['status'] = $topup->status;
+        switch ($topup->status) {
+            case 'PROCESS':
+                $validated['status'] = "SUCCESS";
+                break;
+            default:
+                break;
+        }
+        if($topup->update($validated)) {
             return (new ApiRule)->responsemessage(
-                "Please check your form",
-                $validation->errors(),
-                422
+                "Topup data updated",
+                $topup,
+                200
             );
         } else {
-            if($topup->update($validation->validated())) {
-                return (new ApiRule)->responsemessage(
-                    "Topup data updated",
-                    $topup,
-                    200
-                );
-            } else {
-                return (new ApiRule)->responsemessage(
-                    "Topup data fail to be updated",
-                    "",
-                    500
-                );
-            }
+            return (new ApiRule)->responsemessage(
+                "Topup data fail to be updated",
+                "",
+                500
+            );
         }
     }
 

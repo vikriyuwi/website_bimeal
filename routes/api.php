@@ -35,6 +35,12 @@ Route::apiResource('/topup', TopupController::class);
 Route::apiResource('/product-type', ProductTypeController::class);
 Route::apiResource('/product', ProductController::class);
 Route::apiResource('/order', OrderController::class);
-Route::put('/order/{order}/fail',[OrderController::class,'updatefail']);
-Route::apiResource('/order-detail', OrderDetailController::class);
 Route::apiResource('/payment', PaymentController::class);
+Route::prefix('/order')->group(function(){
+    Route::get('/{order}/cancel',[OrderController::class,'updatefail']);
+    Route::get('/{order}/pay',[PaymentController::class,'store']);
+    Route::get('/{order}/payment',[PaymentController::class,'index']);
+    Route::get('/{order}/payment-history',[PaymentController::class,'history']);
+    Route::get('/{order}/detail',[OrderDetailController::class,'index']);
+});
+// Route::apiResource('/order-detail', OrderDetailController::class);

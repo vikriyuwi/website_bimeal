@@ -11,9 +11,9 @@ class OrderDetailController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(string $order)
     {
-        $orderDetails = OrderDetail::all();
+        $orderDetails = OrderDetail::with('product')->where('order_id','=',$order)->get();
         return (new ApiRule)->responsemessage(
             "Order details data",
             $orderDetails,
@@ -65,7 +65,7 @@ class OrderDetailController extends Controller
     public function show(string $id)
     {
         $orderDetail = OrderDetail::find($id);
-
+        $orderDetail->product;
         if(!$orderDetail) {
             return (new ApiRule)->responsemessage(
                 "Order detail data not found",

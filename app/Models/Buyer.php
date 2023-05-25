@@ -14,8 +14,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Buyer extends Model
 {
     use HasFactory,HasUuids;
-    protected $fillable = [    
-        'account_id',
+    protected $fillable = [
+        'username',
+        'password',
+        'email',
+        'phone',
+        'role',
+        'verified_at',
+        'token',
         'name',
         'group',
         'group_id',

@@ -13,8 +13,12 @@ return new class extends Migration
     {
         Schema::create('merchants', function (Blueprint $table) {
             $table->uuid('id')->unique()->primary();
-            $table->char('account_id',36);
-            $table->foreign('account_id')->references('id')->on('accounts')->onUpdate('CASCADE')->onDelete('CASCADE');
+            $table->string('username',256);
+            $table->string('password',256);
+            $table->string('email',256);
+            $table->string('phone',16);
+            $table->dateTime('verified_at')->nullable();
+            $table->string('token',256)->nullable();
             $table->string('name',255);
             $table->string('location_number',256);
             $table->string('time_open',32);

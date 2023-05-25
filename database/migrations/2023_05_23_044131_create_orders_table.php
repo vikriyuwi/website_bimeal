@@ -15,6 +15,7 @@ return new class extends Migration
             $table->uuid('id')->unique()->primary();
             $table->char('buyer_id',36);
             $table->foreign('buyer_id')->references('id')->on('buyers')->onUpdate('CASCADE')->onDelete('CASCADE');
+            $table->string('code',256)->nullable();
             $table->string('status',256);
             $table->timestamps();
         });

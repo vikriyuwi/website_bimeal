@@ -26,7 +26,7 @@ class AccountController extends Controller
         'password' => 'required|string',
         'email' => 'required|email',
         'phone' => 'required|string',
-        'role' => 'required|in:STUDENT,LECTURER,STAFF,OTHER',
+        'role' => 'required|in:BUYER,MERCHANT',
         'verified_at' => 'date',
         'token' => 'string'
     ]);
@@ -46,7 +46,7 @@ class AccountController extends Controller
         if ($newAccount) {
             return (new ApiRule)->responsemessage(
                 "New account successfully created!",
-                $validator,
+                $validator->validated(),
                 201
             );
         } else {

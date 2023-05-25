@@ -130,7 +130,8 @@ class AccountController extends Controller
     public function destroy(string $id)
     {
         $account = Account::find($id);
-        if ($account){
+
+        if (!$account){
             return (new ApiRule)->responsemessage(
                 "Account data not found",
                 $account,

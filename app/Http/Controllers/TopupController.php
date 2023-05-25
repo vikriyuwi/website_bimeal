@@ -11,9 +11,9 @@ class TopupController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(string $buyer)
     {
-        $topups = Topup::all();
+        $topups = Topup::where('buyer_id','=',$buyer)->get();
         return (new ApiRule)->responsemessage(
             "Topups data",
             $topups,
@@ -24,8 +24,9 @@ class TopupController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(string $buyer,Request $request)
     {
+        $request['buyer_id'] = $buyer;
         $validation = Validator::make(
             $request->all(),
             [
@@ -63,7 +64,7 @@ class TopupController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $buyer, string $id)
     {
         $topup = Topup::find($id);
 
@@ -74,18 +75,26 @@ class TopupController extends Controller
                 404
             );
         } else {
-            return (new ApiRule)->responsemessage(
-                "Topup data found",
-                $topup,
-                200
-            );
+            if($topup->buyer_id == $buyer) {
+                return (new ApiRule)->responsemessage(
+                    "Topup data found",
+                    $topup,
+                    200
+                );
+            } else {
+                return (new ApiRule)->responsemessage(
+                    "Topup data not own by this buyer",
+                    null,
+                    200
+                );
+            }
         }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(string $buyer, Request $request, string $id)
     {
         $topup = Topup::find($id);
 
@@ -96,6 +105,15 @@ class TopupController extends Controller
                 404
             );
         }
+
+        if($topup->buyer_id != $buyer) {
+            return (new ApiRule)->responsemessage(
+                "Topup data not own by this buyer",
+                null,
+                200
+            );
+        }
+
         $validated['status'] = $topup->status;
         switch ($topup->status) {
             case 'PROCESS':
@@ -122,7 +140,7 @@ class TopupController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $buyer, string $id)
     {
         $topup = Topup::find($id);
 
@@ -131,6 +149,14 @@ class TopupController extends Controller
                 "Topup data not found",
                 "",
                 404
+            );
+        }
+
+        if($topup->buyer_id != $buyer) {
+            return (new ApiRule)->responsemessage(
+                "Topup data not own by this buyer",
+                null,
+                200
             );
         }
 

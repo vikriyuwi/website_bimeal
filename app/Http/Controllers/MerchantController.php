@@ -21,7 +21,7 @@ class MerchantController extends Controller
             200
         );
     }
-    
+
     /**
      * Store a newly created resource in storage.
      */
@@ -30,11 +30,16 @@ class MerchantController extends Controller
         $validation = Validator::make(
             $request->all(),
             [
-                'account_id'=>'required|exists:accounts,id',
-                'name'=>'required|string',
-                'location_number'=>'required|string',
-                'time_open'=>'required',
-                'time_close'=>'required'
+                'username' => 'required|string',
+                'password' => 'required|string',
+                'email'=> 'required|string',
+                'phone' => 'required|string',
+                'verified_at' => 'date',
+                'token' => 'string',
+                'name' => 'required|string',
+                'location_number' => 'required|string',
+                'time_open' => 'required|string',
+                'time_close' => 'required|string'
             ]
         );
 
@@ -45,7 +50,14 @@ class MerchantController extends Controller
                 422
             );
         } else {
-            $newMerchant = Merchant::create($validation->validated());
+            // $newMerchant = Merchant::create($validation->validated());
+            // $newMerchant['password'] = bcrypt($newMerchant['password']);
+
+            $validatedData = $validation->validated();
+            $validatedData['password'] = bcrypt($validatedData['password']);
+
+            $newMerchant = Merchant::create($validatedData);
+
             if($newMerchant) {
                 return (new ApiRule)->responsemessage(
                     "New merchant created",
@@ -91,10 +103,10 @@ class MerchantController extends Controller
         $validation = Validator::make(
             $request->all(),
             [
-                'name'=>'required|string',
-                'location_number'=>'required|string',
-                'time_open'=>'required',
-                'time_close'=>'required'
+                'name' => 'string',
+                'location_number' => 'string',
+                'time_open' => 'string',
+                'time_close' => 'string'
             ]
         );
 
@@ -115,7 +127,7 @@ class MerchantController extends Controller
         } else {
             if($merchant->update($validation->validated())) {
                 return (new ApiRule)->responsemessage(
-    
+
                     "Merchant data updated",
                     $merchant,
                     200
@@ -133,30 +145,4 @@ class MerchantController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
-    {
-        $merchant = Merchant::find($id);
-
-        if(!$merchant) {
-            return (new ApiRule)->responsemessage(
-                "Merchant data not found",
-                "",
-                404
-            );
-        }
-
-        if($merchant->delete()) {
-            return (new ApiRule)->responsemessage(
-                "Merchant data deleted",
-                $merchant,
-                200
-            );
-        } else {
-            return (new ApiRule)->responsemessage(
-                "Merchant data fail to be deleted",
-                $merchant,
-                500
-            );
-        }
-    }
 }

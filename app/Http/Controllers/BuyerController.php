@@ -29,10 +29,15 @@ class BuyerController extends Controller
         $validation = Validator::make(
             $request->all(),
             [
-                'account_id'=>'required|exists:accounts,id',
+                'username' => 'required|string',
+                'password' => 'required|string',
+                'email' => 'required|email',
+                'phone' => 'required|string',
+                'verified_at' => 'date',
+                'token' => 'string',
                 'name' => 'required|string',
                 'group' => 'required|string|in:STUDENT,LECTURER,STAFF,OTHER',
-                'group_id' => 'required'
+                'group_id' => 'required|string'
             ]
         );
         if($validation->fails()) {
@@ -42,7 +47,11 @@ class BuyerController extends Controller
                 422
             );
         } else {
-            $newBuyer = Buyer::create($validation->validated());
+        $validatedData = $validation->validated();
+        $validatedData['password'] = bcrypt($validatedData['password']);
+
+            $newBuyer = Buyer::create($validatedData);
+
             if($newBuyer) {
                 return (new ApiRule)->responsemessage(
                     "New buyer created",
@@ -96,9 +105,10 @@ class BuyerController extends Controller
         $validation = Validator::make(
             $request->all(),
             [
-                'name' => 'required|string',
-                'group' => 'required|string',
-                'group_id' => 'required'
+                'username' => 'string',
+                'name' => 'string',
+                'group' => 'string|in:STUDENT,LECTURER,STAFF,OTHER',
+                'group_id' => 'string'
             ]
         );
         
@@ -125,33 +135,4 @@ class BuyerController extends Controller
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        $buyer = Buyer::find($id);
-
-        if(!$buyer) {
-            return (new ApiRule)->responsemessage(
-                "Buyer data not found",
-                "",
-                404
-            );
-        }
-
-        if($buyer->delete()) {
-            return (new ApiRule)->responsemessage(
-                "Buyer data deleted",
-                $buyer,
-                200
-            );
-        } else {
-            return (new ApiRule)->responsemessage(
-                "Buyer data fail to be deleted",
-                $buyer,
-                500
-            );
-        }
-    }
 }

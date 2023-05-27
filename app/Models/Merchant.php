@@ -10,21 +10,27 @@ use App\Models\Withdraw;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
-class Merchant extends Model
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Tymon\JWTAuth\Contracts\JWTSubject;
+class Merchant extends Authenticatable implements JWTSubject
 {
-    use HasFactory,HasUuids;
+    use HasFactory,HasUuids,Notifiable;
     protected $fillable = [
         'username',
         'password',
         'email',
         'phone',
         'verified_at',
-        'token',
+        'remember_token',
         'name',
         'location_number',
         'time_open',
         'time_close'
+    ];
+    protected $hidden = [
+        'password',
+        'remember_token'
     ];
     public function withdraws(): HasMany
     {
@@ -34,4 +40,15 @@ class Merchant extends Model
     {
         return $this->hasMany(Product::class);
     }
+    public function getJWTIdentifier() {
+        return $this->getKey();
+    }
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     *
+     * @return array
+     */
+    public function getJWTCustomClaims() {
+        return [];
+    } 
 }

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('email',256);
             $table->string('phone',16);
             $table->dateTime('verified_at')->nullable();
-            $table->string('token',256)->nullable();
+            $table->string('remember_token',256)->nullable();
             $table->string('name',255);
             $table->string('location_number',256);
             $table->string('time_open',32);

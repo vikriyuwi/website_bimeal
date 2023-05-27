@@ -2,13 +2,10 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AccountController;
-use App\Http\Controllers\BuyerController;
-use App\Http\Controllers\MerchantController;
+use App\Http\Controllers\AuthBuyerApiController;
+use App\Http\Controllers\AuthMerchantApiController;
 use App\Http\Controllers\WithdrawController;
-use App\Http\Controllers\TopupController;
 use App\Http\Controllers\ProductTypeController;
-use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderDetailController;
 use App\Http\Controllers\PaymentController;
@@ -27,27 +24,32 @@ use App\Http\Controllers\PaymentController;
 //     return $request->user();
 // });
 
-Route::apiResource('/account', AccountController::class);
-Route::apiResource('/buyer', BuyerController::class);
-Route::prefix('/buyer')->group(function() {
-    Route::get('/{buyer}/topup',[TopupController::class,'index']);
-    Route::post('/{buyer}/topup',[TopupController::class,'store']);
-    Route::get('/{buyer}/topup/{topup}',[TopupController::class,'show']);
-    Route::put('/{buyer}/topup/{topup}',[TopupController::class,'update']);
+Route::group([
+    'prefix' => 'buyer'
+], function($router) {
+    Route::get('/',[AuthBuyerApiController::class,'index'])->name('login');
+    Route::post('login',[AuthBuyerApiController::class,'login']);
+    Route::post('register',[AuthBuyerApiController::class,'register']);
+    Route::group([
+        // 'middleware' => 'auth:buyerAPI',
+    ],function(){
+        Route::get('login-data',[AuthBuyerApiController::class,'data']);
+        Route::get('logout',[AuthBuyerApiController::class,'logout']);
+    });
 });
-// Route::apiResource('/topup', TopupController::class);
-Route::apiResource('/merchant', MerchantController::class);
-Route::prefix('/merchant')->group(function() {
-    Route::get('/{merchant}/product',[ProductController::class,'index']);
-    Route::post('/{merchant}/product',[ProductController::class,'store']);
-    Route::get('/{merchant}/product/{product}',[ProductController::class,'show']);
-    Route::put('/{merchant}/product/{product}',[ProductController::class,'update']);
-    Route::delete('/{merchant}/product/{product}',[ProductController::class,'destroy']);
-    // withdraw
-    Route::get('/{merchant}/withdraw',[WithdrawController::class,'index']);
-    Route::post('/{merchant}/withdraw',[WithdrawController::class,'store']);
-    Route::get('/{merchant}/withdraw/{withdraw}',[WithdrawController::class,'show']);
-    Route::put('/{merchant}/withdraw/{withdraw}',[WithdrawController::class,'update']);
+
+Route::group([
+    'prefix' => 'merchant'
+], function($router) {
+    Route::get('/',[AuthMerchantApiController::class,'index'])->name('login');
+    Route::post('login',[AuthMerchantApiController::class,'login']);
+    Route::post('register',[AuthMerchantApiController::class,'register']);
+    Route::group([
+        // 'middleware' => 'auth:merchantAPI',
+    ],function(){
+        Route::get('login-data',[AuthMerchantApiController::class,'data']);
+        Route::get('logout',[AuthMerchantApiController::class,'logout']);
+    });
 });
 // Route::apiResource('/product', ProductController::class);
 Route::apiResource('/withdraw', WithdrawController::class);

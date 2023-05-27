@@ -38,7 +38,20 @@ return [
     'guards' => [
         'web' => [
             'driver' => 'session',
-            'provider' => 'users',
+            'provider' => 'buyers',
+        ],
+        'merchant' => [
+            'driver' => 'session',
+            'provider' => 'merchants',
+        ],
+        'buyerAPI' => [
+            'driver' => 'jwt',
+            'provider' => 'buyers',
+            // 'hash' => false,
+        ],
+        'merchantAPI' => [
+            'driver' => 'jwt',
+            'provider' => 'merchants',
         ],
     ],
 
@@ -60,9 +73,13 @@ return [
     */
 
     'providers' => [
-        'users' => [
+        'buyers' => [
             'driver' => 'eloquent',
-            'model' => App\Models\User::class,
+            'model' => App\Models\Buyer::class,
+        ],
+        'merchants' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Merchant::class,
         ],
 
         // 'users' => [

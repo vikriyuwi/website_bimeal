@@ -7,9 +7,14 @@ use App\Models\OrderDetail;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\ApiRule;
 use App\Models\Product;
-
+use App\Models\Order;
+use Illuminate\Support\Facades\Auth;
 class OrderDetailController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth:buyerApi');
+    }
     /**
      * Display a listing of the resource.
      */
@@ -26,26 +31,30 @@ class OrderDetailController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(string $order,Request $request)
+    public function store(Request $request)
     {
-        $request['order_id'] = $order;
+        $oldOrder = true;
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+
+        $order = Order::where('buyer_id','=',(string) $apy->sub)->where('status','=','NEW')->orderBy('created_at','DESC')->first();
+
+        if($order == null)
+        {
+            $order = Order::create([
+                'buyer_id' => (string) $apy->sub,
+                'status' => 'NEW'
+            ]);
+            $oldOrder = false;
+        }
+
         $validation = Validator::make(
             $request->all(),
             [
-                'order_id'=>'required|exists:orders,id',
                 'product_id'=>'required|exists:products,id',
                 'quantity'=>'required|numeric'
             ]
         );
-
-        $stock = Product::find($request->product_id)->stock;
-        if($request->quantity > $stock) {
-            return (new ApiRule)->responsemessage(
-                "Order reach the maximum stock",
-                null,
-                422
-            );
-        }
 
         if($validation->fails()) {
             return (new ApiRule)->responsemessage(
@@ -54,7 +63,35 @@ class OrderDetailController extends Controller
                 422
             );
         } else {
-            $newOrderDetail = OrderDetail::create($validation->validated());
+            $product = Product::find($request->product_id);
+
+            if($oldOrder) {
+                $lastOrderProduct = $order->orderDetails[0]->product_id;
+                $lastProduct = Product::find($lastOrderProduct);
+
+                if($product->merchant_id != $lastProduct->merchant_id) {
+                    return (new ApiRule)->responsemessage(
+                        "Order in multiple merchant is not allowed",
+                        null,
+                        422
+                    );
+                }
+            }
+
+            if($request->quantity > $product->stock) {
+                return (new ApiRule)->responsemessage(
+                    "Order reach the maximum stock",
+                    null,
+                    422
+                );
+            }
+
+            $validated = $validation->validated();
+            $validated['order_id'] = $order->id;
+            $validated['total_price'] = $product->price * $validated['quantity'];
+
+            $newOrderDetail = OrderDetail::create($validated);
+            $newOrderDetail = OrderDetail::with('product')->find($newOrderDetail->id);
             if($newOrderDetail) {
                 return (new ApiRule)->responsemessage(
                     "New order detail created",
@@ -70,34 +107,14 @@ class OrderDetailController extends Controller
             }
         }
     }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        $orderDetail = OrderDetail::find($id);
-        $orderDetail->product;
-        if(!$orderDetail) {
-            return (new ApiRule)->responsemessage(
-                "Order detail data not found",
-                "",
-                404
-            );
-        } else {
-            return (new ApiRule)->responsemessage(
-                "Order detail data found",
-                $orderDetail,
-                200
-            );
-        }
-    }
-
     /**
      * Update the specified resource in storage.
      */
-    public function update(string $order,Request $request, string $id)
+    public function update(Request $request, string $id)
     {
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+
         $orderDetail = OrderDetail::find($id);
 
         if(!$orderDetail) {
@@ -108,10 +125,20 @@ class OrderDetailController extends Controller
             );
         }
 
-        if($orderDetail->order_id != $order) {
+        if($orderDetail->order->buyer_id != $apy->sub) {
             return (new ApiRule)->responsemessage(
-                "This product not in this order detail list",
+                "The order is not own by you",
                 null,
+                422
+            );
+        }
+
+        $order = Order::find($orderDetail->order->id);
+
+        if($order->status != 'NEW') {
+            return (new ApiRule)->responsemessage(
+                "Update fail",
+                "The order status is already in ".$order->status,
                 422
             );
         }
@@ -130,8 +157,8 @@ class OrderDetailController extends Controller
                 422
             );
         } else {
-            $stock = Product::find($orderDetail->product_id)->stock;
-            if($request->quantity > $stock) {
+            $product = Product::find($orderDetail->product_id);
+            if($request->quantity > $product->stock) {
                 return (new ApiRule)->responsemessage(
                     "Order reach the maximum stock",
                     null,
@@ -139,7 +166,9 @@ class OrderDetailController extends Controller
                 );
             }
 
-            if($orderDetail->update($validation->validated())) {
+            $validated = $validation->validated();
+            $validated['total_price'] = $product->price * $validated['quantity'];
+            if($orderDetail->update($validated)) {
                 return (new ApiRule)->responsemessage(
                     "Order data updated",
                     $orderDetail,
@@ -158,8 +187,11 @@ class OrderDetailController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $order,string $id)
+    public function destroy(string $id)
     {
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+
         $orderDetail = OrderDetail::find($id);
 
         if(!$orderDetail) {
@@ -170,26 +202,39 @@ class OrderDetailController extends Controller
             );
         }
 
+        if($orderDetail->order->buyer_id != $apy->sub) {
+            return (new ApiRule)->responsemessage(
+                "The order is not own by you",
+                null,
+                422
+            );
+        }
+
+        $order = Order::find($orderDetail->order_id);
+
+        if($order->status != 'NEW') {
+            return (new ApiRule)->responsemessage(
+                "Deleted fail",
+                "The order status is already in ".$order->status,
+                422
+            );
+        }
+
         if($orderDetail->delete()) {
+            if($order->orderDetails()->count() < 1) {
+                $order->delete();
+            }
             return (new ApiRule)->responsemessage(
                 "Order detail data deleted",
                 $orderDetail,
                 200
             );
         } else {
-            if($orderDetail->order_id != $order) {
-                return (new ApiRule)->responsemessage(
-                    "This product not in this order detail list",
-                    null,
-                    422
-                );
-            } else {
-                return (new ApiRule)->responsemessage(
-                    "Order detail data fail to be deleted",
-                    $orderDetail,
-                    500
-                );
-            }
+            return (new ApiRule)->responsemessage(
+                "Order detail data fail to be deleted",
+                $orderDetail,
+                500
+            );
         }
     }
 }

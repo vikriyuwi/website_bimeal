@@ -44,6 +44,46 @@ class AuthAdminApiController extends Controller
             );
         }
     }
+    public function register(Request $request)
+    {
+        $messages = [
+            'same' => 'The :attribute and :other must match.',
+            'in' => 'The :attribute must be one of the following types: :values',
+            'unique' => 'The :attribute is already registered',
+        ];
+        $validator = Validator::make($request->all(), [
+            'username' => 'required|string|min:8|unique:admins,username',
+            'password' => 'required|string|confirmed|min:6',
+            'email' => 'required|email|unique:admins,email',
+            'phone' => 'required|string|unique:admins,phone',
+            'name' => 'required|string',
+        ],$messages);
+        
+        if ($validator->fails()) {
+            return (new ApiRule)->responsemessage(
+                "Please check the form validation",
+                $validator->errors(),
+                422
+            );
+        } else {
+            $validatedData = $validator->validated();
+            $validatedData['password'] = bcrypt($validatedData['password']);
+            $newAccount = Admin::create($validatedData);
+            if ($newAccount) {
+                return (new ApiRule)->responsemessage(
+                    "New account successfully created",
+                    $newAccount,
+                    201
+                );
+            } else {
+                return (new ApiRule)->responsemessage(
+                    "Failed to create new account",
+                    null,
+                    500
+                );
+            }
+        }
+    }
     public function data(Request $request)
     {
         $token = Auth::getToken();
@@ -121,7 +161,7 @@ class AuthAdminApiController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'expires_in' => auth('buyerApi')->factory()->getTTL() * 60,
+            'expires_in' => auth('adminApi')->factory()->getTTL() * 60,
             'user' => auth()->user()
         ]);
     }

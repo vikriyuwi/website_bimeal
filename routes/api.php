@@ -11,6 +11,8 @@ use App\Http\Controllers\ProductTypeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderDetailController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ProductController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -43,6 +45,17 @@ Route::group([
     Route::get('/history',[TopupController::class,'history']);
     Route::post('/topup',[TopupController::class,'store']);
 });
+Route::group([
+    'middleware' => 'auth:buyerApi',
+    'prefix' => 'order'
+],function(){
+    Route::get('/',[OrderController::class,'index']);
+    Route::get('/item',[OrderController::class,'activeOrder']);
+    Route::post('/item/add',[OrderDetailController::class,'store']);
+    Route::put('/item/{orderDetail}',[OrderDetailController::class,'update']);
+    Route::delete('/item/{orderDetail}',[OrderDetailController::class,'destroy']);
+    Route::get('/cancel',[OrderController::class,'cancel']);
+});
 
 Route::group([
     'prefix' => 'admin'
@@ -54,23 +67,20 @@ Route::group([
     Route::get('login-data',[AuthAdminApiController::class,'data']);
     Route::get('logout',[AuthAdminApiController::class,'logout']);
 });
+
 Route::group([
     'prefix' => 'merchant'
 ], function($router) {
     Route::get('/',[AuthMerchantApiController::class,'index']);
     Route::post('login',[AuthMerchantApiController::class,'login']);
     Route::post('register',[AuthMerchantApiController::class,'register']);
-    Route::group([
-        // 'middleware' => 'auth:merchantAPI',
-    ],function(){
-        Route::get('login-data',[AuthMerchantApiController::class,'data']);
-        Route::get('logout',[AuthMerchantApiController::class,'logout']);
-    });
+    Route::get('login-data',[AuthMerchantApiController::class,'data']);
+    Route::get('logout',[AuthMerchantApiController::class,'logout']);
+    Route::apiResource('/product',ProductController::class,['except'=>['destroy']]);
 });
 // Route::apiResource('/product', ProductController::class);
 Route::apiResource('/withdraw', WithdrawController::class);
 Route::apiResource('/product-type', ProductTypeController::class);
-Route::apiResource('/order', OrderController::class);
 Route::prefix('/order')->group(function(){
     Route::get('/{order}/cancel',[OrderController::class,'updatefail']);
     Route::get('/{order}/pay',[PaymentController::class,'store']);

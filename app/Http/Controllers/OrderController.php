@@ -10,15 +10,19 @@ use App\Models\OrderDetail;
 use App\Models\Payment;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Auth;
 class OrderController extends Controller
 {
+    
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $orders = Order::all();
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+
+        $orders = Order::with('orderDetails')->where('buyer_id','=',(string) $apy->sub)->get();
         return (new ApiRule)->responsemessage(
             "Orders data",
             $orders,
@@ -26,41 +30,54 @@ class OrderController extends Controller
         );
     }
 
+    public function activeOrder()
+    {
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+
+        $order = Order::with('orderDetails')->where('buyer_id','=',(string) $apy->sub)->where('status','=','NEW')->orderBy('created_at','DESC')->first();
+
+        if($order == null)
+        {
+            return (new ApiRule)->responsemessage(
+                "No active order",
+                null,
+                404
+            );
+        }
+
+        return (new ApiRule)->responsemessage(
+            "Active order data",
+            $order,
+            200
+        );
+    }
+
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request,$id)
+    public function store(Request $request)
     {
-        $validation = Validator::make(
-            $request->all(),
-            [
-                'buyer_id'=>'required|exists:buyers,id',
-            ]
-        );
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
 
-        if($validation->fails()) {
+        $newOrder = Order::create([
+            'buyer_id' => (string) $apy->sub,
+            'status' => 'NEW'
+        ]);
+
+        if($newOrder) {
             return (new ApiRule)->responsemessage(
-                "Please check your form",
-                $validation->errors(),
-                422
+                "New order created",
+                $newOrder,
+                201
             );
         } else {
-            $validated = $validation->validated();
-            $validated['status'] = "NEW";
-            $newOrder = Order::create($validated);
-            if($newOrder) {
-                return (new ApiRule)->responsemessage(
-                    "New order created",
-                    $newOrder,
-                    201
-                );
-            } else {
-                return (new ApiRule)->responsemessage(
-                    "New order fail to be created",
-                    "",
-                    500
-                );
-            }
+            return (new ApiRule)->responsemessage(
+                "New order fail to be created",
+                "",
+                500
+            );
         }
     }
 
@@ -80,7 +97,6 @@ class OrderController extends Controller
         } else {
             $order->orderDetails;
             $payment = $order->payments()->orderBy('updated_at','DESC')->first();
-            // $order['detail'] = $detail;
             $order['payment'] = $payment;
             return (new ApiRule)->responsemessage(
                 "Order data found",
@@ -95,10 +111,11 @@ class OrderController extends Controller
      */
     public function update(string $id)
     {
-        $order = Order::find($id);
-        $pay = Order::find($id)->payments()->orderBy('updated_at','DESC')->first();
-        $payment = Payment::find($pay->id);
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
 
+        $order = Order::find($id)->with('orderDetails');
+        
         if(!$order) {
             return (new ApiRule)->responsemessage(
                 "Order data not found",
@@ -107,13 +124,24 @@ class OrderController extends Controller
             );
         }
 
-        if($order->status == 'FAIL') {
+        if($order->merchant_id != (string) $apy->sub) {
             return (new ApiRule)->responsemessage(
-                "Cannot process due the order canceled",
+                "Order is not in your merchant",
                 null,
                 422
             );
         }
+
+        if($order->status == 'FAIL') {
+            return (new ApiRule)->responsemessage(
+                "Cannot process due the order is has been canceled",
+                null,
+                422
+            );
+        }
+
+        $pay = Order::find($id)->payments()->orderBy('updated_at','DESC')->first();
+        $payment = Payment::find($pay->id);
 
         if($payment->status == 'FAIL') {
             return (new ApiRule)->responsemessage(
@@ -126,35 +154,43 @@ class OrderController extends Controller
         $transaction = true;
 
         $details = OrderDetail::with('product')->where('order_id','=',$id)->get();
+
+        $reachStock = false;
         foreach ($details as $d) {
             if ($d->quantity > $d->product->stock) {
-                try {
-                    DB::transaction(function () use ($order,$payment) {
-                        $data['status'] = "FAIL";
+                $reachStock = true;
+                break;
+            }
+        }
 
-                        $order->update($data);
-                        $payment->update($data);
-                    });
-                } catch (\Throwable $th) {
-                    $transaction = false;
-                }
-                if($transaction) {
-                    return (new ApiRule)->responsemessage(
-                        "Order and payment canceled due the minimum stock",
-                        null,
-                        200
-                    );
-                } else {
-                    return (new ApiRule)->responsemessage(
-                        "Server error",
-                        "",
-                        500
-                    );
-                }
+        if($reachStock) {
+            try {
+                DB::transaction(function () use ($order,$payment) {
+                    $data['status'] = "FAIL";
+                    $order->update($data);
+                    $payment->update($data);
+                });
+            } catch (\Throwable $th) {
+                $transaction = false;
+            }
+
+            if($transaction) {
+                return (new ApiRule)->responsemessage(
+                    "Order and payment canceled due the minimum stock",
+                    null,
+                    200
+                );
+            } else {
+                return (new ApiRule)->responsemessage(
+                    "Server error",
+                    "",
+                    500
+                );
             }
         }
 
         $newStatus = "";
+        
         switch ($order->status) {
             case "NEW":
                 $newStatus = "PROCESS";
@@ -173,6 +209,7 @@ class OrderController extends Controller
                     $product = Product::find($d->product->id);
                     $data['stock'] = $product->stock - $d->quantity;
                     $product->update($data);
+
                 }
 
                 $data['status'] = $newStatus;
@@ -201,6 +238,30 @@ class OrderController extends Controller
             );
         }
     }
+    public function cancel()
+    {
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+
+        $order = Order::where('buyer_id','=',(string) $apy->sub)->where('status','=','NEW')->orderBy('created_at','DESC')->first();
+
+        if(!$order) {
+            return (new ApiRule)->responsemessage(
+                "There are no order data to cancel",
+                null,
+                404
+            );
+        }
+
+        $data['status'] = 'FAIL';
+        $order->update($data);
+
+        return (new ApiRule)->responsemessage(
+            "Order has been canceled",
+            $order,
+            200
+        );
+    }
     public function updatefail(string $id)
     {
         $order = Order::find($id);
@@ -208,7 +269,7 @@ class OrderController extends Controller
         if(!$order) {
             return (new ApiRule)->responsemessage(
                 "Order data not found",
-                "",
+                null,
                 404
             );
         }

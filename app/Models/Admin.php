@@ -22,6 +22,10 @@ class Admin extends Authenticatable implements JWTSubject
         'remember_token',
         'name'
     ];
+    protected $hidden = [
+        'password',
+        'remember_token'
+    ];
     public function topups(): HasMany {
         return $this->hasMany(Topup::class);
     }

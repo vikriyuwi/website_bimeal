@@ -21,7 +21,7 @@ class ProductController extends Controller
         $token = Auth::getToken();
         $apy = (object) Auth::getPayload($token)->toArray();
 
-        $products = Product::with('productType')->where('merchant_id','=',$apy->sub)->get();
+        $products = Product::with('productType')->where('merchant_id','=',(string) $apy->sub)->get();
         if(!$products) {
             return (new ApiRule)->responsemessage(
                 "Products data not found",
@@ -40,20 +40,20 @@ class ProductController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(string $merchant,Request $request)
+    public function store(Request $request)
     {
-        $request['merchant_id'] = $merchant;
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+
         $validation = Validator::make(
             $request->all(),
             [
-                'merchant_id'=>'required|exists:merchants,id',
                 'product_type_id'=>'required|exists:product_types,id',
                 'name'=>'required|string',
                 'price'=>'required|numeric',
                 'stock'=>'required|numeric'
             ]
         );
-
         if($validation->fails()) {
             return (new ApiRule)->responsemessage(
                 "Please check your form",
@@ -62,7 +62,7 @@ class ProductController extends Controller
             );
         } else {
             $validated = $validation->validated();
-            $validated['merchant_id'] = $merchant;
+            $validated['merchant_id'] = (string) $apy->sub;
             $newProduct = Product::create($validated);
             if($newProduct) {
                 return (new ApiRule)->responsemessage(
@@ -83,8 +83,11 @@ class ProductController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $merchant,string $id)
+    public function show(string $id)
     {
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+
         $product = Product::find($id);
 
         if(!$product) {
@@ -94,7 +97,7 @@ class ProductController extends Controller
                 404
             );
         } else {
-            if($product->merchant_id == $merchant) {
+            if($product->merchant_id == $apy->sub) {
                 return (new ApiRule)->responsemessage(
                     "Product data found",
                     $product,
@@ -113,8 +116,11 @@ class ProductController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(string $merchant, Request $request, string $id)
+    public function update(Request $request, string $id)
     {
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+
         $product = Product::find($id);
 
         if(!$product) {
@@ -125,7 +131,7 @@ class ProductController extends Controller
             );
         }
 
-        if($product->merchant_id != $merchant) {
+        if($product->merchant_id != $apy->sub) {
             return (new ApiRule)->responsemessage(
                 "Product data not own by this merchant",
                 null,
@@ -136,10 +142,10 @@ class ProductController extends Controller
         $validation = Validator::make(
             $request->all(),
             [
-                'product_type_id'=>'required|exists:product_types,id',
-                'name'=>'required|string',
-                'price'=>'required|numeric',
-                'stock'=>'required|numeric'
+                'product_type_id'=>'exists:product_types,id',
+                'name'=>'string',
+                'price'=>'numeric',
+                'stock'=>'numeric'
             ]
         );
 
@@ -169,38 +175,38 @@ class ProductController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $merchant, string $id)
-    {
-        $product = Product::find($id);
+    // public function destroy(string $merchant, string $id)
+    // {
+    //     $product = Product::find($id);
 
-        if(!$product) {
-            return (new ApiRule)->responsemessage(
-                "Product data not found",
-                "",
-                404
-            );
-        }
+    //     if(!$product) {
+    //         return (new ApiRule)->responsemessage(
+    //             "Product data not found",
+    //             "",
+    //             404
+    //         );
+    //     }
 
-        if($product->merchant_id != $merchant) {
-            return (new ApiRule)->responsemessage(
-                "Product data not own by this merchant",
-                null,
-                200
-            );
-        }
+    //     if($product->merchant_id != $merchant) {
+    //         return (new ApiRule)->responsemessage(
+    //             "Product data not own by this merchant",
+    //             null,
+    //             200
+    //         );
+    //     }
 
-        if($product->delete()) {
-            return (new ApiRule)->responsemessage(
-                "Product data deleted",
-                $product,
-                200
-            );
-        } else {
-            return (new ApiRule)->responsemessage(
-                "Product data fail to be deleted",
-                $product,
-                500
-            );
-        }
-    }
+    //     if($product->delete()) {
+    //         return (new ApiRule)->responsemessage(
+    //             "Product data deleted",
+    //             $product,
+    //             200
+    //         );
+    //     } else {
+    //         return (new ApiRule)->responsemessage(
+    //             "Product data fail to be deleted",
+    //             $product,
+    //             500
+    //         );
+    //     }
+    // }
 }

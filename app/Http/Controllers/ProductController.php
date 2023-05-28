@@ -6,15 +6,22 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\ApiRule;
-
+use Illuminate\Support\Facades\Auth;
 class ProductController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth:merchantApi');
+    }
     /**
      * Display a listing of the resource.
      */
-    public function index(string $merchant)
+    public function index()
     {
-        $products = Product::with('productType')->where('merchant_id','=',$merchant)->get();
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+
+        $products = Product::with('productType')->where('merchant_id','=',$apy->sub)->get();
         if(!$products) {
             return (new ApiRule)->responsemessage(
                 "Products data not found",

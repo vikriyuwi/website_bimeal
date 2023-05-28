@@ -12,11 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('topups', function (Blueprint $table) {
-            $table->uuid('id')->unique()->primary();
+            $table->uuid('id')->primary();
             $table->char('buyer_id',36);
             $table->foreign('buyer_id')->references('id')->on('buyers')->onUpdate('CASCADE')->onDelete('CASCADE');
             $table->integer('debt');
             $table->string('status');
+            $table->char('admin_id',36);
+            $table->foreign('admin_id')->references('id')->on('admins')->onUpdate('CASCADE')->onDelete('CASCADE');
             $table->timestamps();
         });
     }

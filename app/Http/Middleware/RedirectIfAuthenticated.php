@@ -21,14 +21,14 @@ class RedirectIfAuthenticated
     {
         $guards = empty($guards) ? [null] : $guards;
 
-        if (!Auth::guard('buyerAPI')->check()) {
+        if (!Auth::guard('buyerApi')->check()) {
             Session::flash('flash_message', 'You need to log in to access this page.');
-            return Redirect::guest(route('buyerAPI.login'));
+            return Redirect::guest(route('buyerApi.login'));
         }
     
-        if (!Auth::guard('merchantAPI')->check()) {
+        if (!Auth::guard('merchantApi')->check()) {
             Session::flash('flash_message', 'You need to log in to access this page.');
-            return Redirect::guest(route('merchantAPI.login'));
+            return Redirect::guest(route('merchantApi.login'));
         }
 
         // foreach ($guards as $guard) {

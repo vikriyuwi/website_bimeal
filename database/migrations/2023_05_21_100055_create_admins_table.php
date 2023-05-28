@@ -11,17 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('buyers', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+        Schema::create('admins', function (Blueprint $table) {
+            $table->uuid('id')->unique()->primary();
             $table->string('username',256)->unique();
             $table->string('password',256);
             $table->string('email',256)->unique();
             $table->string('phone',16)->unique();
             $table->dateTime('verified_at')->nullable();
             $table->string('remember_token',256)->nullable();
-            $table->string('name',256);
-            $table->string('group',256);
-            $table->string('group_id',256);
+            $table->string('name',255);
             $table->timestamps();
         });
     }
@@ -31,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('buyers');
+        Schema::dropIfExists('admins');
     }
 };

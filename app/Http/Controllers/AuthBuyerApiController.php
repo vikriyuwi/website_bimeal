@@ -5,13 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Buyer;
-use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Auth;
 class AuthBuyerApiController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:buyerAPI',[
+        $this->middleware('auth:buyerApi',[
             'except' => ['index','login','register']
         ]);
     }
@@ -77,7 +76,7 @@ class AuthBuyerApiController extends Controller
         $validated = $validator->validated();
 
         $token = null;
-        if ($token = Auth::guard('merchantAPI')->attempt($validated)) {
+        if ($token = Auth::guard('buyerApi')->attempt($validated)) {
             return $this->createNewToken($token);
         } else {
             return (new ApiRule)->responsemessage(
@@ -122,17 +121,17 @@ class AuthBuyerApiController extends Controller
     public function data(Request $request)
     {
         $token = Auth::getToken();
-        $apy = Auth::getPayload($token)->toArray();
+        $apy = (object) Auth::getPayload($token)->toArray();
 
-        $buyer = Buyer::find($apy['sub']);
+        $buyer = Buyer::find($apy->sub);
         return response()->json($buyer,200);
     }
 
     protected function createNewToken($token){
         return response()->json([
             'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth('buyerAPI')->factory()->getTTL() * 60,
+            'token_type' => 'Bearer',
+            'expires_in' => auth('buyerApi')->factory()->getTTL() * 60,
             'user' => auth()->user()
         ]);
     }

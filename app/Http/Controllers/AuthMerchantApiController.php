@@ -10,7 +10,7 @@ class AuthMerchantApiController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:merchantAPI',[
+        $this->middleware('auth:merchantApi',[
             'except' => ['index','login','register']
         ]);
     }
@@ -76,7 +76,7 @@ class AuthMerchantApiController extends Controller
         $validated = $validator->validated();
 
         $token = null;
-        if ($token = Auth::guard('merchantAPI')->attempt($validated)) {
+        if ($token = Auth::guard('merchantApi')->attempt($validated)) {
             return $this->createNewToken($token);
         } else {
             return (new ApiRule)->responsemessage(
@@ -128,8 +128,8 @@ class AuthMerchantApiController extends Controller
     protected function createNewToken($token){
         return response()->json([
             'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth('merchantAPI')->factory()->getTTL() * 60,
+            'token_type' => 'Bearer',
+            'expires_in' => auth('merchantApi')->factory()->getTTL() * 60,
             'user' => auth()->user()
         ]);
     }

@@ -2,21 +2,49 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BuyerBalance;
 use Illuminate\Http\Request;
 use App\Models\Topup;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\ApiRule;
+use App\Models\Admin;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Models\BuyerBalanceReport;
 class TopupController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth:buyerApi',);
+    }
     /**
      * Display a listing of the resource.
      */
-    public function index(string $buyer)
+    public function index()
     {
-        $topups = Topup::where('buyer_id','=',$buyer)->get();
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+
+        $balance = DB::select("select * from `buyer_balances` where `buyer_id` = '".$apy->sub."' limit 1;");
+        // $topups = BuyerBalance::where('buyer_id','=',$apy->sub)->first();
         return (new ApiRule)->responsemessage(
             "Topups data",
-            $topups,
+            $balance,
+            200
+        );
+    }
+
+    public function history()
+    {
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+
+        $balance = BuyerBalanceReport::where('buyer_id','=',(string) $apy->sub)->get();
+        // $balance = DB::select("select * from `buyer_balance_reports` where `buyer_id` = '".$apy->sub."';");
+        // $topups = BuyerBalance::where('buyer_id','=',$apy->sub)->first();
+        return (new ApiRule)->responsemessage(
+            "Topups data",
+            $balance,
             200
         );
     }
@@ -24,13 +52,21 @@ class TopupController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(string $buyer,Request $request)
+    public function store(Request $request)
     {
-        $request['buyer_id'] = $buyer;
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+
+        $request['buyer_id'] = $apy->sub;
+
+        $admin = Admin::first();
+
+        // return $admin->id;
+        // return response()->json($admin->id);
+
         $validation = Validator::make(
             $request->all(),
             [
-                'buyer_id'=>'required|exists:buyers,id',
                 'debt'=>'required|numeric',
             ]
         );
@@ -44,6 +80,8 @@ class TopupController extends Controller
         } else {
             $validated = $validation->validated();
             $validated['status'] = "PROCESS";
+            $validated['buyer_id'] = $apy->sub;
+            $validated['admin_id'] = (string) $admin->id;
             $newTopup = Topup::create($validated);
             if($newTopup) {
                 return (new ApiRule)->responsemessage(

@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('merchants', function (Blueprint $table) {
-            $table->uuid('id')->unique()->primary();
-            $table->string('username',256);
-            $table->string('password',256);
+            $table->uuid('id')->primary();
+            $table->string('username',256)->unique();
+            $table->string('password',256)->unique();
             $table->string('email',256);
-            $table->string('phone',16);
+            $table->string('phone',16)->unique();
             $table->dateTime('verified_at')->nullable();
             $table->string('remember_token',256)->nullable();
             $table->string('name',255);

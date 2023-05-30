@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Buyer;
 use App\Models\OrderDetail;
 use App\Models\Payment;
+use App\Models\Merchant;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -16,6 +17,7 @@ class Order extends Model
     use HasFactory,HasUuids;
     protected $fillable = [
         'buyer_id',
+        'merchant_id',
         'status'
     ];
     public function buyer(): BelongsTo
@@ -29,5 +31,9 @@ class Order extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+    public function merchant(): BelongsTo
+    {
+        return $this->belongsTo(Merchant::class);
     }
 }

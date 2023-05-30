@@ -51,7 +51,6 @@ class ProductController extends Controller
                 'product_type_id'=>'required|exists:product_types,id',
                 'name'=>'required|string',
                 'price'=>'required|numeric',
-                'stock'=>'required|numeric'
             ]
         );
         if($validation->fails()) {
@@ -145,7 +144,8 @@ class ProductController extends Controller
                 'product_type_id'=>'exists:product_types,id',
                 'name'=>'string',
                 'price'=>'numeric',
-                'stock'=>'numeric'
+                'is_available'=>'boolean',
+                'is_active'=>'boolean'
             ]
         );
 

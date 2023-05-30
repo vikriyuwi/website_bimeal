@@ -50,11 +50,12 @@ Route::group([
     'prefix' => 'order'
 ],function(){
     Route::get('/',[OrderController::class,'index']);
-    Route::get('/item',[OrderController::class,'activeOrder']);
-    Route::post('/item/add',[OrderDetailController::class,'store']);
-    Route::put('/item/{orderDetail}',[OrderDetailController::class,'update']);
-    Route::delete('/item/{orderDetail}',[OrderDetailController::class,'destroy']);
-    Route::get('/cancel',[OrderController::class,'cancel']);
+    Route::get('/now',[OrderController::class,'activeOrder']);
+    Route::post('/add',[OrderDetailController::class,'store']);
+    Route::put('/{orderDetail}',[OrderDetailController::class,'update']);
+    Route::delete('/{orderDetail}',[OrderDetailController::class,'destroy']);
+    Route::get('{order}/pay',[OrderController::class,'pay']);
+    Route::get('{order}/cancel',[OrderController::class,'cancel']);
 });
 
 Route::group([
@@ -77,17 +78,24 @@ Route::group([
     Route::get('login-data',[AuthMerchantApiController::class,'data']);
     Route::get('logout',[AuthMerchantApiController::class,'logout']);
     Route::apiResource('/product',ProductController::class,['except'=>['destroy']]);
+    Route::group([
+        'middleware' => 'auth:merchantApi'
+    ], function(){
+        Route::get('order',[OrderController::class,'indexMerchant']);
+        Route::get('order/{order}/cancel',[OrderController::class,'cancelByMerchant']);
+        Route::get('order/{order}/update',[OrderController::class,'update']);
+    });
 });
 // Route::apiResource('/product', ProductController::class);
-Route::apiResource('/withdraw', WithdrawController::class);
-Route::apiResource('/product-type', ProductTypeController::class);
-Route::prefix('/order')->group(function(){
-    Route::get('/{order}/cancel',[OrderController::class,'updatefail']);
-    Route::get('/{order}/pay',[PaymentController::class,'store']);
-    Route::get('/{order}/payment',[PaymentController::class,'index']);
-    Route::get('/{order}/payment-history',[PaymentController::class,'history']);
-    Route::get('/{order}/item',[OrderDetailController::class,'index']);
-    Route::post('/{order}/item',[OrderDetailController::class,'store']);
-    Route::put('/{order}/item/{detail}',[OrderDetailController::class,'update']);
-    Route::delete('/{order}/item/{detail}',[OrderDetailController::class,'destroy']);
-});
+// Route::apiResource('/withdraw', WithdrawController::class);
+// Route::apiResource('/product-type', ProductTypeController::class);
+// Route::prefix('/order')->group(function(){
+//     Route::get('/{order}/cancel',[OrderController::class,'updatefail']);
+//     Route::get('/{order}/pay',[PaymentController::class,'store']);
+//     Route::get('/{order}/payment',[PaymentController::class,'index']);
+//     Route::get('/{order}/payment-history',[PaymentController::class,'history']);
+//     Route::get('/{order}/item',[OrderDetailController::class,'index']);
+//     Route::post('/{order}/item',[OrderDetailController::class,'store']);
+//     Route::put('/{order}/item/{detail}',[OrderDetailController::class,'update']);
+//     Route::delete('/{order}/item/{detail}',[OrderDetailController::class,'destroy']);
+// });

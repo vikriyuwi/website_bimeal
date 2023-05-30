@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\ApiRule;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use App\Models\BuyerBalanceReport;
 class TopupController extends Controller
 {
@@ -25,8 +24,7 @@ class TopupController extends Controller
         $token = Auth::getToken();
         $apy = (object) Auth::getPayload($token)->toArray();
 
-        $balance = DB::select("select * from `buyer_balances` where `buyer_id` = '".$apy->sub."' limit 1;");
-        // $topups = BuyerBalance::where('buyer_id','=',$apy->sub)->first();
+        $balance = BuyerBalance::where('buyer_id','=',(string) $apy->sub)->first();
         return (new ApiRule)->responsemessage(
             "Topups data",
             $balance,

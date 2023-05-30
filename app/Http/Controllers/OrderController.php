@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Order;
-use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\ApiRule;
 use App\Models\OrderDetail;
 use App\Models\Payment;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+use App\Models\BuyerBalance;
 class OrderController extends Controller
 {
     
@@ -23,6 +24,21 @@ class OrderController extends Controller
         $apy = (object) Auth::getPayload($token)->toArray();
 
         $orders = Order::with('orderDetails')->where('buyer_id','=',(string) $apy->sub)->get();
+
+        return (new ApiRule)->responsemessage(
+            "Orders data",
+            $orders,
+            200
+        );
+    }
+
+    public function indexMerchant()
+    {
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+
+        $orders = Order::with('orderDetails')->where('merchant_id','=',(string) $apy->sub)->get();
+
         return (new ApiRule)->responsemessage(
             "Orders data",
             $orders,
@@ -45,6 +61,15 @@ class OrderController extends Controller
                 404
             );
         }
+
+        $bill = 0;
+
+        foreach($order->orderDetails as $detail)
+        {
+            $bill += $detail->total_price;
+        }
+
+        $order['bill'] = $bill;
 
         return (new ApiRule)->responsemessage(
             "Active order data",
@@ -114,7 +139,7 @@ class OrderController extends Controller
         $token = Auth::getToken();
         $apy = (object) Auth::getPayload($token)->toArray();
 
-        $order = Order::find($id)->with('orderDetails');
+        $order = Order::with('orderDetails')->find($id);
         
         if(!$order) {
             return (new ApiRule)->responsemessage(
@@ -132,15 +157,24 @@ class OrderController extends Controller
             );
         }
 
-        if($order->status == 'FAIL') {
+        if($order->status == "FAIL" || $order->status == "CANCELED") {
             return (new ApiRule)->responsemessage(
-                "Cannot process due the order is has been canceled",
-                null,
+                "Update fail due the order status",
+                $order,
                 422
             );
         }
 
         $pay = Order::find($id)->payments()->orderBy('updated_at','DESC')->first();
+
+        if(!$pay) {
+            return (new ApiRule)->responsemessage(
+                "Order is not paid",
+                null,
+                422
+            );
+        }
+
         $payment = Payment::find($pay->id);
 
         if($payment->status == 'FAIL') {
@@ -151,19 +185,41 @@ class OrderController extends Controller
             );
         }
 
-        $transaction = true;
+        if(($order->status != 'PAID') && $order->status != 'PROCESS') {
+            return (new ApiRule)->responsemessage(
+                "Cannot update due the order status is ".$order->status,
+                $order,
+                422
+            );
+        }
 
         $details = OrderDetail::with('product')->where('order_id','=',$id)->get();
 
-        $reachStock = false;
-        foreach ($details as $d) {
-            if ($d->quantity > $d->product->stock) {
-                $reachStock = true;
-                break;
+        $unavailable = [];
+        $inactive = [];
+        $total = 0;
+        foreach ($details as $detail) {
+            $d = OrderDetail::find($detail->id);
+            $product = Product::find($detail->product_id);
+            $data['total_price'] = $product->price * $detail->quantity;
+            $d->update($data);
+
+            if(!$product->is_available)
+            {
+                array_push($unavailable,$product->name);
             }
+
+            if(!$product->is_active)
+            {
+                array_push($inactive,$product->name);
+            }
+
+            $total = $total + $data['total_price'];
         }
 
-        if($reachStock) {
+        if($unavailable || $inactive)
+        {
+            $transaction = true;
             try {
                 DB::transaction(function () use ($order,$payment) {
                     $data['status'] = "FAIL";
@@ -174,25 +230,30 @@ class OrderController extends Controller
                 $transaction = false;
             }
 
-            if($transaction) {
-                return (new ApiRule)->responsemessage(
-                    "Order and payment canceled due the minimum stock",
-                    null,
-                    200
-                );
-            } else {
-                return (new ApiRule)->responsemessage(
-                    "Server error",
-                    "",
-                    500
-                );
+            if($transaction)
+            {
+                if($inactive)
+                {
+                    return (new ApiRule)->responsemessage(
+                        "Order failed due the inactive product",
+                        $inactive,
+                        409
+                    );
+                } else if ($unavailable)
+                {
+                    return (new ApiRule)->responsemessage(
+                        "Order failed due the unvailable stock",
+                        $unavailable,
+                        409
+                    );
+                }
             }
         }
 
         $newStatus = "";
         
         switch ($order->status) {
-            case "NEW":
+            case "PAID":
                 $newStatus = "PROCESS";
                 break;
             case "PROCESS":
@@ -203,22 +264,20 @@ class OrderController extends Controller
                 break;
         }
 
-        try {
-            DB::transaction(function () use ($order,$details,$newStatus,$payment) {
-                foreach ($details as $d) {
-                    $product = Product::find($d->product->id);
-                    $data['stock'] = $product->stock - $d->quantity;
-                    $product->update($data);
+        $transaction = true;
 
-                }
+        try {
+            DB::transaction(function () use ($order,$newStatus,$payment) {
 
                 $data['status'] = $newStatus;
                 $order->update($data);
+
                 if($newStatus == 'PROCESS')
                 {
                     $data['status'] = 'SUCCESS';
                     $payment->update($data);
                 }
+
             });
         } catch (\Throwable $th) {
             $transaction = false;
@@ -233,17 +292,17 @@ class OrderController extends Controller
         } else {
             return (new ApiRule)->responsemessage(
                 "Order data fail to be updated",
-                "",
+                null,
                 500
             );
         }
     }
-    public function cancel()
+    public function cancel(string $id)
     {
         $token = Auth::getToken();
         $apy = (object) Auth::getPayload($token)->toArray();
 
-        $order = Order::where('buyer_id','=',(string) $apy->sub)->where('status','=','NEW')->orderBy('created_at','DESC')->first();
+        $order = Order::with('orderDetails')->find($id);
 
         if(!$order) {
             return (new ApiRule)->responsemessage(
@@ -253,30 +312,253 @@ class OrderController extends Controller
             );
         }
 
-        $data['status'] = 'FAIL';
-        $order->update($data);
-
-        return (new ApiRule)->responsemessage(
-            "Order has been canceled",
-            $order,
-            200
-        );
-    }
-    public function updatefail(string $id)
-    {
-        $order = Order::find($id);
-
-        if(!$order) {
+        if($order->buyer_id != $apy->sub) {
             return (new ApiRule)->responsemessage(
-                "Order data not found",
+                "The order is not own by you",
                 null,
                 404
             );
         }
-        $validated['status'] = "FAIL";
-        if($order->update($validated)) {
+
+        if($order->status != 'NEW' && $order->status != 'PAID') {
             return (new ApiRule)->responsemessage(
-                "Order data updated",
+                "Order cannot be canceled due the order status",
+                $order,
+                422
+            );
+        }
+
+        $payment = Payment::where('order_id','=',$order->id)->where('status','=','SUCCESS')->orderBy('updated_at','DESC')->first();
+        $data['status'] = 'FAIL';
+
+        $transaction = true;
+
+        try {
+            DB::transaction(function () use ($order,$payment,$data) {
+                if($payment) {
+                    $payment->update($data);
+                }
+                $order->update($data);
+            });
+        } catch (\Throwable $th) {
+            $transaction = false;
+        }
+
+        if($transaction) {
+            return (new ApiRule)->responsemessage(
+                "Order data has been canceled",
+                $order,
+                200
+            );
+        } else {
+            return (new ApiRule)->responsemessage(
+                "Order data fail to cancel",
+                "",
+                500
+            );
+        }
+    }
+    public function cancelByMerchant(string $id)
+    {
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+
+        $order = Order::with('orderDetails')->find($id);
+
+        if(!$order) {
+            return (new ApiRule)->responsemessage(
+                "There are no order data to cancel",
+                null,
+                404
+            );
+        }
+
+        if($order->merchant_id != $apy->sub) {
+            return (new ApiRule)->responsemessage(
+                "The order is not own by your merchant",
+                null,
+                404
+            );
+        }
+
+        if($order->status != 'NEW' && $order->status != 'PAID') {
+            return (new ApiRule)->responsemessage(
+                "Order cannot be canceled due the order status",
+                $order,
+                422
+            );
+        }
+
+        $payment = Payment::where('order_id','=',$order->id)->where('status','=','SUCCESS')->orderBy('updated_at','DESC')->first();
+        $data['status'] = 'CANCELED';
+
+        $transaction = true;
+
+        try {
+            DB::transaction(function () use ($order,$payment,$data) {
+                if($payment) {
+                    $payment->update($data);
+                }
+                $order->update($data);
+            });
+        } catch (\Throwable $th) {
+            $transaction = false;
+        }
+
+        if($transaction) {
+            return (new ApiRule)->responsemessage(
+                "Order data has been canceled",
+                $order,
+                200
+            );
+        } else {
+            return (new ApiRule)->responsemessage(
+                "Order data fail to cancel",
+                "",
+                500
+            );
+        }
+    }
+    public function pay(string $id)
+    {
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+        $order = Order::find($id);
+
+        if(!$order)
+        {
+            return (new ApiRule)->responsemessage(
+                "Order not found",
+                null,
+                404
+            );
+        }
+
+        if($order->buyer_id != $apy->sub)
+        {
+            return (new ApiRule)->responsemessage(
+                "Order is not own by you",
+                null,
+                422
+            );
+        }
+
+        $diffTime = Carbon::createFromFormat('Y-m-d H:i:s', $order->created_at)->diffInMinutes(Carbon::now());
+        $details = $order->orderDetails;
+
+        if($order->status != 'NEW')
+        {
+            return (new ApiRule)->responsemessage(
+                "Order paid fail due the order status",
+                $order,
+                422
+            );
+        }
+
+        $payment = Payment::where('order_id','=',$id)->where('status','=','SUCCESS')->orderBy('updated_at','DESC')->first();
+
+        if($payment)
+        {
+            return (new ApiRule)->responsemessage(
+                "Order has been paid",
+                null,
+                422
+            );
+        }
+
+        if($diffTime > 30) {
+            $data['status'] = 'EXPIRED';
+            $order->update($data);
+            return (new ApiRule)->responsemessage(
+                "Order expired",
+                null,
+                422
+            );
+        }
+        
+        $unavailable = [];
+        $inactive = [];
+        $total = 0;
+        foreach ($details as $detail) {
+            $d = OrderDetail::find($detail->id);
+            $product = Product::find($detail->product_id);
+
+            $data['total_price'] = $product->price * $detail->quantity;
+            $d->update($data);
+
+            if(!$product->is_available)
+            {
+                array_push($unavailable,$product->name);
+            }
+
+            if(!$product->is_active)
+            {
+                array_push($inactive,$product->name);
+            }
+
+            $total = $total + $data['total_price'];
+        }
+
+        if($unavailable)
+        {
+            $data = [
+                'status' => 'FAIL'
+            ];
+            $order->update($data);
+            return (new ApiRule)->responsemessage(
+                "Order failed due the unvailable stock",
+                $unavailable,
+                409
+            );
+        }
+
+        if($inactive)
+        {
+            $data = [
+                'status' => 'FAIL'
+            ];
+            $order->update($data);
+            return (new ApiRule)->responsemessage(
+                "Order failed due the inactive product",
+                $inactive,
+                409
+            );
+        }
+
+        $balance = BuyerBalance::where('buyer_id','=',(string) $apy->sub)->first();
+
+        if($total > $balance->balance)
+        {
+            $data = [
+                'your_balance' => $balance->balance,
+                'bill' => $total,
+            ];
+            return (new ApiRule)->responsemessage(
+                "Payment failed due the minimum balance",
+                $data,
+                422
+            );
+        }
+
+        $transaction = true;
+        try {
+            DB::transaction(function () use ($order,$total) {
+                $data['status'] = 'PAID';
+                $order->update($data);
+
+                Payment::create([
+                    'order_id' => $order->id,
+                    'bill' => $total,
+                    'status' => 'SUCCESS'
+                ]);
+            });
+        } catch (\Throwable $th) {
+            $transaction = false;
+        }
+
+        if($transaction) {
+            return (new ApiRule)->responsemessage(
+                "Order data has been paid",
                 $order,
                 201
             );
@@ -317,4 +599,6 @@ class OrderController extends Controller
             );
         }
     }
+
+    
 }

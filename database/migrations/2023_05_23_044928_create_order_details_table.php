@@ -18,6 +18,7 @@ return new class extends Migration
             $table->char('product_id',36);
             $table->foreign('product_id')->references('id')->on('products')->onUpdate('CASCADE')->onDelete('CASCADE');
             $table->integer('quantity');
+            $table->integer('total_price');
             $table->timestamps();
         });
     }

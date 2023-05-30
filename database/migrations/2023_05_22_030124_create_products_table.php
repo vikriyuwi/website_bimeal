@@ -19,7 +19,8 @@ return new class extends Migration
             $table->foreign('product_type_id')->references('id')->on('product_types')->onUpdate('CASCADE')->onDelete('CASCADE');
             $table->string('name',256);
             $table->integer('price');
-            $table->integer('stock');
+            $table->boolean('is_available')->default(true);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

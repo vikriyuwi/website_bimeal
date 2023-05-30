@@ -19,7 +19,13 @@ class Product extends Model
         'product_type_id',
         'name',
         'price',
-        'stock'
+        'is_available',
+        'is_active'
+    ];
+    protected $hidden = [
+        'merchant_id',
+        'is_available',
+        'is_active'
     ];
     public function merchant(): BelongsTo
     {

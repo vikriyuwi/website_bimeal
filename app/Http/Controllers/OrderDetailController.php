@@ -33,20 +33,8 @@ class OrderDetailController extends Controller
      */
     public function store(Request $request)
     {
-        $oldOrder = true;
         $token = Auth::getToken();
         $apy = (object) Auth::getPayload($token)->toArray();
-
-        $order = Order::where('buyer_id','=',(string) $apy->sub)->where('status','=','NEW')->orderBy('created_at','DESC')->first();
-
-        if($order == null)
-        {
-            $order = Order::create([
-                'buyer_id' => (string) $apy->sub,
-                'status' => 'NEW'
-            ]);
-            $oldOrder = false;
-        }
 
         $validation = Validator::make(
             $request->all(),
@@ -62,49 +50,77 @@ class OrderDetailController extends Controller
                 $validation->errors(),
                 422
             );
-        } else {
-            $product = Product::find($request->product_id);
+        }
 
-            if($oldOrder) {
-                $lastOrderProduct = $order->orderDetails[0]->product_id;
-                $lastProduct = Product::find($lastOrderProduct);
+        $oldOrder = true;
+        $order = Order::where('buyer_id','=',(string) $apy->sub)->where('status','=','NEW')->orderBy('created_at','DESC')->first();
+        
+        $product = Product::find($request->product_id);
 
-                if($product->merchant_id != $lastProduct->merchant_id) {
-                    return (new ApiRule)->responsemessage(
-                        "Order in multiple merchant is not allowed",
-                        null,
-                        422
-                    );
-                }
-            }
+        if($order == null)
+        {
+            $order = Order::create([
+                'buyer_id' => (string) $apy->sub,
+                'merchant_id' => $product->merchant_id,
+                'status' => 'NEW'
+            ]);
+            $oldOrder = false;
+        }
 
-            if($request->quantity > $product->stock) {
+        if($oldOrder) {
+            if($product->merchant_id != $order->merchant_id) {
                 return (new ApiRule)->responsemessage(
-                    "Order reach the maximum stock",
+                    "Order in multiple merchant is not allowed",
                     null,
                     422
                 );
             }
+        }
 
-            $validated = $validation->validated();
-            $validated['order_id'] = $order->id;
-            $validated['total_price'] = $product->price * $validated['quantity'];
+        if(!$product->is_active)
+        {
+            $data = [
+                'status' => 'FAIL'
+            ];
+            $order->update($data);
+            return (new ApiRule)->responsemessage(
+                "Order failed due the inactive product",
+                $product,
+                409
+            );
+        }
 
-            $newOrderDetail = OrderDetail::create($validated);
-            $newOrderDetail = OrderDetail::with('product')->find($newOrderDetail->id);
-            if($newOrderDetail) {
-                return (new ApiRule)->responsemessage(
-                    "New order detail created",
-                    $newOrderDetail,
-                    201
-                );
-            } else {
-                return (new ApiRule)->responsemessage(
-                    "New order detail fail to be created",
-                    "",
-                    500
-                );
-            }
+        if(!$product->is_available)
+        {
+            $data = [
+                'status' => 'FAIL'
+            ];
+            $order->update($data);
+            return (new ApiRule)->responsemessage(
+                "Order failed due the unvailable stock",
+                $product,
+                409
+            );
+        }
+
+        $validated = $validation->validated();
+        $validated['order_id'] = $order->id;
+        $validated['total_price'] = $product->price * $validated['quantity'];
+
+        $newOrderDetail = OrderDetail::create($validated);
+        $newOrderDetail = OrderDetail::with('product')->find($newOrderDetail->id);
+        if($newOrderDetail) {
+            return (new ApiRule)->responsemessage(
+                "New order detail created",
+                $newOrderDetail,
+                201
+            );
+        } else {
+            return (new ApiRule)->responsemessage(
+                "New order detail fail to be created",
+                "",
+                500
+            );
         }
     }
     /**

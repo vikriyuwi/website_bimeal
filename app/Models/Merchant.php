@@ -4,11 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use App\Models\Account;
+use App\Models\Order;
 use App\Models\Withdraw;
 use App\Models\Product;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -39,6 +37,10 @@ class Merchant extends Authenticatable implements JWTSubject
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
+    }
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
     }
     public function getJWTIdentifier() {
         return $this->getKey();

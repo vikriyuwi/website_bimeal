@@ -129,7 +129,7 @@ class AuthAdminApiController extends Controller
             return (new ApiRule)->responsemessage(
                 "Topup ".$topup->id." has been verified",
                 $topup,
-                422
+                200
             );
         } else {
             return (new ApiRule)->responsemessage(

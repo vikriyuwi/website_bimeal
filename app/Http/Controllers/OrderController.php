@@ -138,9 +138,9 @@ class OrderController extends Controller
     {
         $token = Auth::getToken();
         $apy = (object) Auth::getPayload($token)->toArray();
-
         $order = Order::with('orderDetails')->find($id);
         
+        // existing check
         if(!$order) {
             return (new ApiRule)->responsemessage(
                 "Order data not found",
@@ -149,6 +149,7 @@ class OrderController extends Controller
             );
         }
 
+        // merchant check
         if($order->merchant_id != (string) $apy->sub) {
             return (new ApiRule)->responsemessage(
                 "Order is not in your merchant",
@@ -157,26 +158,26 @@ class OrderController extends Controller
             );
         }
 
-        if($order->status == "FAIL" || $order->status == "CANCELED") {
+        // status check
+        if($order->status != "PAID" && $order->status != "PROCESS") {
             return (new ApiRule)->responsemessage(
                 "Update fail due the order status",
-                $order,
+                [
+                    'order_status' => $order->status
+                ],
                 422
             );
         }
 
-        $pay = Order::find($id)->payments()->orderBy('updated_at','DESC')->first();
-
-        if(!$pay) {
+        // payment check
+        $payment = Order::find($id)->payments()->orderBy('updated_at','DESC')->first();
+        if(!$payment) {
             return (new ApiRule)->responsemessage(
                 "Order is not paid",
                 null,
                 422
             );
         }
-
-        $payment = Payment::find($pay->id);
-
         if($payment->status == 'FAIL') {
             return (new ApiRule)->responsemessage(
                 "Last payment failed",
@@ -185,16 +186,8 @@ class OrderController extends Controller
             );
         }
 
-        if(($order->status != 'PAID') && $order->status != 'PROCESS') {
-            return (new ApiRule)->responsemessage(
-                "Cannot update due the order status is ".$order->status,
-                $order,
-                422
-            );
-        }
-
+        // availability check
         $details = OrderDetail::with('product')->where('order_id','=',$id)->get();
-
         $unavailable = [];
         $inactive = [];
         $total = 0;
@@ -219,6 +212,7 @@ class OrderController extends Controller
 
         if($unavailable || $inactive)
         {
+            // update data
             $transaction = true;
             try {
                 DB::transaction(function () use ($order,$payment) {
@@ -230,6 +224,7 @@ class OrderController extends Controller
                 $transaction = false;
             }
 
+            // return data
             if($transaction)
             {
                 if($inactive)
@@ -250,14 +245,13 @@ class OrderController extends Controller
             }
         }
 
-        $newStatus = "";
-        
+        $newStatus = "";        
         switch ($order->status) {
             case "PAID":
                 $newStatus = "PROCESS";
                 break;
             case "PROCESS":
-                $newStatus = "DONE";
+                $newStatus = "PICKUP";
                 break;
             default:
                 $newStatus = $order->status;
@@ -267,17 +261,18 @@ class OrderController extends Controller
         $transaction = true;
 
         try {
-            DB::transaction(function () use ($order,$newStatus,$payment) {
+            DB::transaction(function () use ($order,$newStatus) {
+                // order status
+                $data = [
+                    'status' => $newStatus,
+                ];
 
-                $data['status'] = $newStatus;
-                $order->update($data);
-
-                if($newStatus == 'PROCESS')
-                {
-                    $data['status'] = 'SUCCESS';
-                    $payment->update($data);
+                // order pickup code
+                if ($newStatus == 'PICKUP') {
+                    $data['code'] = $this->generatePin();
                 }
 
+                $order->update($data);
             });
         } catch (\Throwable $th) {
             $transaction = false;
@@ -297,6 +292,7 @@ class OrderController extends Controller
             );
         }
     }
+
     public function cancel(string $id)
     {
         $token = Auth::getToken();
@@ -317,14 +313,6 @@ class OrderController extends Controller
                 "The order is not own by you",
                 null,
                 404
-            );
-        }
-
-        if($order->status != 'NEW' && $order->status != 'PAID') {
-            return (new ApiRule)->responsemessage(
-                "Order cannot be canceled due the order status",
-                $order,
-                422
             );
         }
 
@@ -358,6 +346,7 @@ class OrderController extends Controller
             );
         }
     }
+
     public function cancelByMerchant(string $id)
     {
         $token = Auth::getToken();
@@ -419,6 +408,7 @@ class OrderController extends Controller
             );
         }
     }
+
     public function pay(string $id)
     {
         $token = Auth::getToken();
@@ -541,6 +531,7 @@ class OrderController extends Controller
         }
 
         $transaction = true;
+        
         try {
             DB::transaction(function () use ($order,$total) {
                 $data['status'] = 'PAID';
@@ -600,5 +591,100 @@ class OrderController extends Controller
         }
     }
 
-    
+    private function generatePin($digits = 6)
+    {
+        $i = 0;
+        $pin = "";
+
+        while ($i < $digits) {
+            $pin .= mt_rand(0, 9);
+            $i++;
+        }
+
+        return $pin;
+    }
+
+    public function pickup(string $id)
+    {
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+        $order = Order::with('orderDetails')->find($id);
+        
+        // existing check
+        if(!$order) {
+            return (new ApiRule)->responsemessage(
+                "Order data not found",
+                null,
+                404
+            );
+        }
+
+        // buyer check
+        if($order->buyer_id != (string) $apy->sub) {
+            return (new ApiRule)->responsemessage(
+                "Order is not in yours",
+                null,
+                422
+            );
+        }
+
+        // status check
+        if($order->status != "PICKUP") {
+            return (new ApiRule)->responsemessage(
+                "Your order is not ready yet",
+                [
+                    'order_status' => $order->status
+                ],
+                422
+            );
+        }
+
+        return (new ApiRule)->responsemessage(
+            "Order detail",
+            $order,
+            200
+        );
+    }
+
+    public function serveOrder(string $id)
+    {
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+        $order = Order::with('orderDetails')->find($id);
+        
+        // existing check
+        if(!$order) {
+            return (new ApiRule)->responsemessage(
+                "Order data not found",
+                null,
+                404
+            );
+        }
+
+        // buyer check
+        if($order->buyer_id != (string) $apy->sub) {
+            return (new ApiRule)->responsemessage(
+                "Order is not in yours",
+                null,
+                422
+            );
+        }
+
+        // status check
+        if($order->status != "PICKUP") {
+            return (new ApiRule)->responsemessage(
+                "Your order is not ready yet",
+                [
+                    'order_status' => $order->status
+                ],
+                422
+            );
+        }
+
+        return (new ApiRule)->responsemessage(
+            "Order detail",
+            $order,
+            200
+        );
+    }
 }

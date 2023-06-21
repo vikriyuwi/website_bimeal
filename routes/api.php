@@ -12,6 +12,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderDetailController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
+use App\Models\Product;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,12 +33,15 @@ use App\Http\Controllers\ProductController;
 Route::get('/',[AuthBuyerApiController::class,'index'])->name('login');
 Route::post('login',[AuthBuyerApiController::class,'login']);
 Route::post('register',[AuthBuyerApiController::class,'register']);
+Route::get('login-data',[AuthBuyerApiController::class,'data']);
+Route::get('logout',[AuthBuyerApiController::class,'logout']);
+
 Route::group([
-    // 'middleware' => 'auth:buyerAPI',
-    ],function(){
-        Route::get('login-data',[AuthBuyerApiController::class,'data']);
-        Route::get('logout',[AuthBuyerApiController::class,'logout']);
+    'prefix' => 'product'
+], function() {
+    Route::get('/',[ProductController::class,'all']);
 });
+
 Route::group([
     'prefix' => 'balance'
 ],function(){
@@ -45,6 +49,7 @@ Route::group([
     Route::get('/history',[TopupController::class,'history']);
     Route::post('/topup',[TopupController::class,'store']);
 });
+
 Route::group([
     'middleware' => 'auth:buyerApi',
     'prefix' => 'order'

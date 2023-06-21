@@ -18,6 +18,7 @@ class Order extends Model
     protected $fillable = [
         'buyer_id',
         'merchant_id',
+        'code',
         'status'
     ];
     public function buyer(): BelongsTo

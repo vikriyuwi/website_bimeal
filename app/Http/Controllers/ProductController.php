@@ -11,7 +11,7 @@ class ProductController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:merchantApi');
+        $this->middleware('auth:merchantApi')->except(['all']);
     }
     /**
      * Display a listing of the resource.
@@ -22,19 +22,21 @@ class ProductController extends Controller
         $apy = (object) Auth::getPayload($token)->toArray();
 
         $products = Product::with('productType')->where('merchant_id','=',(string) $apy->sub)->get();
-        if(!$products) {
-            return (new ApiRule)->responsemessage(
-                "Products data not found",
-                "",
-                404
-            );
-        } else {
-            return (new ApiRule)->responsemessage(
-                "Products data found",
-                $products,
-                200
-            );
-        }
+        return (new ApiRule)->responsemessage(
+            "Products data",
+            $products,
+            200
+        );
+    }
+
+    public function all()
+    {
+        $products = Product::with('productType')->get();
+        return (new ApiRule)->responsemessage(
+            "Products data",
+            $products,
+            200
+        );
     }
 
     /**
@@ -59,23 +61,23 @@ class ProductController extends Controller
                 $validation->errors(),
                 422
             );
+        }
+
+        $validated = $validation->validated();
+        $validated['merchant_id'] = (string) $apy->sub;
+        $newProduct = Product::create($validated);
+        if($newProduct) {
+            return (new ApiRule)->responsemessage(
+                "New product created",
+                $newProduct,
+                201
+            );
         } else {
-            $validated = $validation->validated();
-            $validated['merchant_id'] = (string) $apy->sub;
-            $newProduct = Product::create($validated);
-            if($newProduct) {
-                return (new ApiRule)->responsemessage(
-                    "New product created",
-                    $newProduct,
-                    201
-                );
-            } else {
-                return (new ApiRule)->responsemessage(
-                    "New product fail to be created",
-                    "",
-                    500
-                );
-            }
+            return (new ApiRule)->responsemessage(
+                "New product fail to be created",
+                "",
+                500
+            );
         }
     }
 
@@ -171,42 +173,4 @@ class ProductController extends Controller
             }
         }
     }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    // public function destroy(string $merchant, string $id)
-    // {
-    //     $product = Product::find($id);
-
-    //     if(!$product) {
-    //         return (new ApiRule)->responsemessage(
-    //             "Product data not found",
-    //             "",
-    //             404
-    //         );
-    //     }
-
-    //     if($product->merchant_id != $merchant) {
-    //         return (new ApiRule)->responsemessage(
-    //             "Product data not own by this merchant",
-    //             null,
-    //             200
-    //         );
-    //     }
-
-    //     if($product->delete()) {
-    //         return (new ApiRule)->responsemessage(
-    //             "Product data deleted",
-    //             $product,
-    //             200
-    //         );
-    //     } else {
-    //         return (new ApiRule)->responsemessage(
-    //             "Product data fail to be deleted",
-    //             $product,
-    //             500
-    //         );
-    //     }
-    // }
 }

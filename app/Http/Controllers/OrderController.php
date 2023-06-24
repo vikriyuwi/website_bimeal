@@ -662,9 +662,9 @@ class OrderController extends Controller
         }
 
         // buyer check
-        if($order->buyer_id != (string) $apy->sub) {
+        if($order->merchant_id != (string) $apy->sub) {
             return (new ApiRule)->responsemessage(
-                "Order is not in yours",
+                "Order is not in your merchant",
                 null,
                 422
             );
@@ -686,5 +686,28 @@ class OrderController extends Controller
             $order,
             200
         );
+
+        try {
+            DB::transaction(function () use ($order) {
+                $data['status'] = 'DONE';
+                $order->update($data);
+            });
+        } catch (\Throwable $th) {
+            $transaction = false;
+        }
+
+        if($transaction) {
+            return (new ApiRule)->responsemessage(
+                "Order is done",
+                $order,
+                201
+            );
+        } else {
+            return (new ApiRule)->responsemessage(
+                "Order data fail to be updated",
+                "",
+                500
+            );
+        }
     }
 }

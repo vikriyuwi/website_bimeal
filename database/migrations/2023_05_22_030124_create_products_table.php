@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreign('merchant_id')->references('id')->on('merchants')->onUpdate('CASCADE')->onDelete('CASCADE');
             $table->char('product_type_id',36);
             $table->foreign('product_type_id')->references('id')->on('product_types')->onUpdate('CASCADE')->onDelete('CASCADE');
+            $table->string('image',256);
             $table->string('name',256);
             $table->integer('price');
             $table->boolean('is_available')->default(true);

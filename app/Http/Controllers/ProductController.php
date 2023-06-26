@@ -53,8 +53,10 @@ class ProductController extends Controller
                 'product_type_id'=>'required|exists:product_types,id',
                 'name'=>'required|string',
                 'price'=>'required|numeric',
+                'image'=>'required|mimes:jpg,jpeg,png',
             ]
         );
+
         if($validation->fails()) {
             return (new ApiRule)->responsemessage(
                 "Please check your form",
@@ -62,10 +64,17 @@ class ProductController extends Controller
                 422
             );
         }
+        
+        if( $path = $request->file('image')->store('/',['disk' => 'product_folder']) ) {
+            $newProduct = Product::create([
+                "merchant_id" => (string) $apy->sub,
+                "product_type_id" => $request->product_type_id,
+                "name" => $request->name,
+                "price" => $request->price,
+                "image" => $path,
+            ]);
+        }
 
-        $validated = $validation->validated();
-        $validated['merchant_id'] = (string) $apy->sub;
-        $newProduct = Product::create($validated);
         if($newProduct) {
             return (new ApiRule)->responsemessage(
                 "New product created",

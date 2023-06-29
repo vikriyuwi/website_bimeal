@@ -51,14 +51,14 @@ class OrderController extends Controller
         $token = Auth::getToken();
         $apy = (object) Auth::getPayload($token)->toArray();
 
-        $order = Order::with('orderDetails')->where('buyer_id','=',(string) $apy->sub)->where('status','=','NEW')->orderBy('created_at','DESC')->first();
+        $order = Order::with('orderDetails')->where('buyer_id','=',(string) $apy->sub)->where('status','!=','EXPIRED')->WHERE('status','!=','DONE')->orderBy('created_at','DESC')->first();
 
         if($order == null)
         {
             return (new ApiRule)->responsemessage(
                 "No active order",
                 null,
-                404
+                200
             );
         }
 
@@ -111,7 +111,9 @@ class OrderController extends Controller
      */
     public function show(string $id)
     {
-        $order = Order::find($id);
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+        $order = Order::with('orderDetails')->find($id);
 
         if(!$order) {
             return (new ApiRule)->responsemessage(
@@ -119,16 +121,23 @@ class OrderController extends Controller
                 "",
                 404
             );
-        } else {
-            $order->orderDetails;
-            $payment = $order->payments()->orderBy('updated_at','DESC')->first();
-            $order['payment'] = $payment;
+        }
+
+        if($order->buyer_id != (string) $apy->sub) {
             return (new ApiRule)->responsemessage(
-                "Order data found",
-                $order,
-                200
+                "Order is not in your merchant",
+                null,
+                422
             );
         }
+
+        $payment = $order->payments()->orderBy('updated_at','DESC')->first();
+        $order['payment'] = $payment;
+        return (new ApiRule)->responsemessage(
+            "Order data found",
+            $order,
+            200
+        );
     }
 
     /**

@@ -56,6 +56,11 @@ return [
             'throw' => false,
         ],
 
+        'product_folder' => [
+            'driver' => 'local',
+            'root'   => public_path() . '/assets/products/',
+        ],
+
     ],
 
     /*

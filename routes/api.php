@@ -57,6 +57,8 @@ Route::group([
     Route::get('/',[OrderController::class,'index']);
     Route::get('/now',[OrderController::class,'activeOrder']);
     Route::post('/add',[OrderDetailController::class,'store']);
+    Route::get('/{orderDetail}',[OrderController::class,'show']);
+    Route::get('/{orderDetail}/detail',[OrderDetailController::class,'index']);
     Route::put('/{orderDetail}',[OrderDetailController::class,'update']);
     Route::delete('/{orderDetail}',[OrderDetailController::class,'destroy']);
     Route::get('{order}/pay',[OrderController::class,'pay']);
@@ -89,6 +91,7 @@ Route::group([
         Route::get('order',[OrderController::class,'indexMerchant']);
         Route::get('order/{order}/cancel',[OrderController::class,'cancelByMerchant']);
         Route::get('order/{order}/update',[OrderController::class,'update']);
+        Route::get('order/{order}/serve',[OrderController::class,'serveOrder']);
     });
 });
 // Route::apiResource('/product', ProductController::class);

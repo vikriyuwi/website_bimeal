@@ -126,6 +126,7 @@ class ComposerStaticInit012065237b5cb2d2a6083d884a24f7bb
             'Laravel\\SerializableClosure\\' => 28,
             'Laravel\\Sanctum\\' => 16,
             'Laravel\\Sail\\' => 13,
+            'Laravel\\Breeze\\' => 15,
         ),
         'I' => 
         array (
@@ -432,6 +433,10 @@ class ComposerStaticInit012065237b5cb2d2a6083d884a24f7bb
         array (
             0 => __DIR__ . '/..' . '/laravel/sail/src',
         ),
+        'Laravel\\Breeze\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/laravel/breeze/src',
+        ),
         'Illuminate\\Support\\' => 
         array (
             0 => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Macroable',
@@ -538,6 +543,9 @@ class ComposerStaticInit012065237b5cb2d2a6083d884a24f7bb
         'App\\Exceptions\\Handler' => __DIR__ . '/../..' . '/app/Exceptions/Handler.php',
         'App\\Http\\Controllers\\AccountController' => __DIR__ . '/../..' . '/app/Http/Controllers/AccountController.php',
         'App\\Http\\Controllers\\ApiRule' => __DIR__ . '/../..' . '/app/Http/Controllers/ApiRule.php',
+        'App\\Http\\Controllers\\AuthAdminApiController' => __DIR__ . '/../..' . '/app/Http/Controllers/AuthAdminApiController.php',
+        'App\\Http\\Controllers\\AuthBuyerApiController' => __DIR__ . '/../..' . '/app/Http/Controllers/AuthBuyerApiController.php',
+        'App\\Http\\Controllers\\AuthMerchantApiController' => __DIR__ . '/../..' . '/app/Http/Controllers/AuthMerchantApiController.php',
         'App\\Http\\Controllers\\BuyerController' => __DIR__ . '/../..' . '/app/Http/Controllers/BuyerController.php',
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
         'App\\Http\\Controllers\\MerchantController' => __DIR__ . '/../..' . '/app/Http/Controllers/MerchantController.php',
@@ -559,8 +567,10 @@ class ComposerStaticInit012065237b5cb2d2a6083d884a24f7bb
         'App\\Http\\Middleware\\ValidateSignature' => __DIR__ . '/../..' . '/app/Http/Middleware/ValidateSignature.php',
         'App\\Http\\Middleware\\VerifyCsrfToken' => __DIR__ . '/../..' . '/app/Http/Middleware/VerifyCsrfToken.php',
         'App\\Models\\Account' => __DIR__ . '/../..' . '/app/Models/Account.php',
+        'App\\Models\\Admin' => __DIR__ . '/../..' . '/app/Models/Admin.php',
         'App\\Models\\Buyer' => __DIR__ . '/../..' . '/app/Models/Buyer.php',
         'App\\Models\\BuyerBalance' => __DIR__ . '/../..' . '/app/Models/BuyerBalance.php',
+        'App\\Models\\BuyerBalanceReport' => __DIR__ . '/../..' . '/app/Models/BuyerBalanceReport.php',
         'App\\Models\\Merchant' => __DIR__ . '/../..' . '/app/Models/Merchant.php',
         'App\\Models\\Order' => __DIR__ . '/../..' . '/app/Models/Order.php',
         'App\\Models\\OrderDetail' => __DIR__ . '/../..' . '/app/Models/OrderDetail.php',
@@ -2750,6 +2760,11 @@ class ComposerStaticInit012065237b5cb2d2a6083d884a24f7bb
         'Illuminate\\View\\ViewFinderInterface' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/View/ViewFinderInterface.php',
         'Illuminate\\View\\ViewName' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/View/ViewName.php',
         'Illuminate\\View\\ViewServiceProvider' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/View/ViewServiceProvider.php',
+        'Laravel\\Breeze\\BreezeServiceProvider' => __DIR__ . '/..' . '/laravel/breeze/src/BreezeServiceProvider.php',
+        'Laravel\\Breeze\\Console\\InstallCommand' => __DIR__ . '/..' . '/laravel/breeze/src/Console/InstallCommand.php',
+        'Laravel\\Breeze\\Console\\InstallsApiStack' => __DIR__ . '/..' . '/laravel/breeze/src/Console/InstallsApiStack.php',
+        'Laravel\\Breeze\\Console\\InstallsBladeStack' => __DIR__ . '/..' . '/laravel/breeze/src/Console/InstallsBladeStack.php',
+        'Laravel\\Breeze\\Console\\InstallsInertiaStacks' => __DIR__ . '/..' . '/laravel/breeze/src/Console/InstallsInertiaStacks.php',
         'Laravel\\Sail\\Console\\AddCommand' => __DIR__ . '/..' . '/laravel/sail/src/Console/AddCommand.php',
         'Laravel\\Sail\\Console\\Concerns\\InteractsWithDockerComposeServices' => __DIR__ . '/..' . '/laravel/sail/src/Console/Concerns/InteractsWithDockerComposeServices.php',
         'Laravel\\Sail\\Console\\InstallCommand' => __DIR__ . '/..' . '/laravel/sail/src/Console/InstallCommand.php',

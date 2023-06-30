@@ -91,7 +91,7 @@ Route::group([
         Route::get('order',[OrderController::class,'indexMerchant']);
         Route::get('order/{order}/cancel',[OrderController::class,'cancelByMerchant']);
         Route::get('order/{order}/update',[OrderController::class,'update']);
-        Route::get('order/{order}/serve',[OrderController::class,'serveOrder']);
+        Route::put('order/{order}/serve',[OrderController::class,'serveOrder']);
     });
 });
 // Route::apiResource('/product', ProductController::class);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use App\Models\Order;
 use App\Http\Controllers\ApiRule;
 use App\Models\OrderDetail;
@@ -655,7 +656,7 @@ class OrderController extends Controller
         );
     }
 
-    public function serveOrder(string $id)
+    public function serveOrder(Request $request,string $id)
     {
         $token = Auth::getToken();
         $apy = (object) Auth::getPayload($token)->toArray();
@@ -690,11 +691,30 @@ class OrderController extends Controller
             );
         }
 
-        return (new ApiRule)->responsemessage(
-            "Order detail",
-            $order,
-            200
+        $validation = Validator::make(
+            $request->all(),
+            [
+                'code'=>'required|numeric',
+            ]
         );
+
+        if($validation->fails()) {
+            return (new ApiRule)->responsemessage(
+                "Please check your form",
+                $validation->errors(),
+                422
+            );
+        }
+
+        if($order->code != $request->code) {
+            return (new ApiRule)->responsemessage(
+                "Code is not valid",
+                [
+                    'your_code' => $request->code
+                ],
+                422
+            );
+        }
 
         try {
             DB::transaction(function () use ($order) {

@@ -141,6 +141,37 @@ class OrderController extends Controller
         );
     }
 
+    public function showMerchant(string $id)
+    {
+        $token = Auth::getToken();
+        $apy = (object) Auth::getPayload($token)->toArray();
+        $order = Order::with('orderDetails','buyer','merchant')->find($id);
+
+        if(!$order) {
+            return (new ApiRule)->responsemessage(
+                "Order data not found",
+                "",
+                404
+            );
+        }
+
+        if($order->merchant_id != (string) $apy->sub) {
+            return (new ApiRule)->responsemessage(
+                "Order is not in yours",
+                null,
+                422
+            );
+        }
+        
+        $payment = $order->payments()->orderBy('updated_at','DESC')->first();
+        $order['payment'] = $payment;
+        return (new ApiRule)->responsemessage(
+            "Order data found",
+            $order,
+            200
+        );
+    }
+
     /**
      * Update the specified resource in storage.
      */
@@ -738,5 +769,15 @@ class OrderController extends Controller
                 500
             );
         }
+    }
+
+    public function detail(string $order)
+    {
+        $orderDetails = OrderDetail::with('product')->where('order_id','=',$order)->get();
+        return (new ApiRule)->responsemessage(
+            "Order details data",
+            $orderDetails,
+            200
+        );
     }
 }

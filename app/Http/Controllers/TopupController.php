@@ -37,7 +37,7 @@ class TopupController extends Controller
         $token = Auth::getToken();
         $apy = (object) Auth::getPayload($token)->toArray();
 
-        $balance = BuyerBalanceReport::where('buyer_id','=',(string) $apy->sub)->get();
+        $balance = BuyerBalanceReport::where('buyer_id','=',(string) $apy->sub)->orderBy('last_update','DESC')->get();
         // $balance = DB::select("select * from `buyer_balance_reports` where `buyer_id` = '".$apy->sub."';");
         // $topups = BuyerBalance::where('buyer_id','=',$apy->sub)->first();
         return (new ApiRule)->responsemessage(

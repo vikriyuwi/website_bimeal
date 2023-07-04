@@ -92,6 +92,27 @@ class AuthAdminApiController extends Controller
         $admin = Admin::find((string) $apy->sub);
         return response()->json($admin,200);
     }
+
+    public function topup()
+    {
+        $balance = Topup::orderBy('updated_at','DESC')->get();
+        // $balance = DB::select("select * from `buyer_balance_reports` where `buyer_id` = '".$apy->sub."';");
+        // $topups = BuyerBalance::where('buyer_id','=',$apy->sub)->first();
+        return (new ApiRule)->responsemessage(
+            "Topups data",
+            $balance,
+            200
+        );
+    }
+    public function showTopup(string $id)
+    {
+        $balance = Topup::with('buyer','admin')->find($id);
+        return (new ApiRule)->responsemessage(
+            "Topups data",
+            $balance,
+            200
+        );
+    }
     public function topupVerify(Request $request)
     {
         $token = Auth::getToken();

@@ -69,6 +69,8 @@ Route::group([
     'prefix' => 'admin'
 ], function($router) {
     Route::get('/',[AuthAdminApiController::class,'index']);
+    Route::post('topup',[AuthAdminApiController::class,'topup']);
+    Route::get('topup/{topup}',[AuthAdminApiController::class,'showTopup']);
     Route::post('topup-verify',[AuthAdminApiController::class,'topupVerify']);
     Route::post('login',[AuthAdminApiController::class,'login']);
     Route::post('register',[AuthAdminApiController::class,'register']);

@@ -89,9 +89,12 @@ Route::group([
         'middleware' => 'auth:merchantApi'
     ], function(){
         Route::get('order',[OrderController::class,'indexMerchant']);
+        Route::get('order/{order}',[OrderController::class,'showMerchant']);
+        Route::get('order/{order}/detail',[OrderController::class,'detail']);
         Route::get('order/{order}/cancel',[OrderController::class,'cancelByMerchant']);
         Route::get('order/{order}/update',[OrderController::class,'update']);
         Route::put('order/{order}/serve',[OrderController::class,'serveOrder']);
+        Route::get('product-type',[ProductTypeController::class,'index']);
     });
 });
 // Route::apiResource('/product', ProductController::class);

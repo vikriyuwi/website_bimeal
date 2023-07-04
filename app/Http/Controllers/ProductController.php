@@ -31,7 +31,7 @@ class ProductController extends Controller
 
     public function all()
     {
-        $products = Product::with('productType')->get();
+        $products = Product::with('productType')->where('is_available','=',1)->where('is_active','=',1)->get();
         return (new ApiRule)->responsemessage(
             "Products data",
             $products,
